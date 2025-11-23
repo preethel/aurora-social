@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Iframely Embed Test</title>
+    <style>
+      body {
+        font-family: Arial;
+        max-width: 800px;
+        margin: 50px auto;
+      }
+      .container {
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      h2 {
+        margin-top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Iframely Embed Test</h1>
+
+    <div class="container">
+      <h2>Test 1: Direct HTML Injection from API Response</h2>
+      <div id="embed1"></div>
+    </div>
+
+    <div class="container">
+      <h2>Test 2: API Response Raw</h2>
+      <pre id="response"></pre>
+    </div>
+
+    <script>
+      // Fetch from the API and display the HTML
+      async function testEmbed() {
+        const url = "https://pin.it/76q797g08";
+        const apiUrl = `/api/iframely?url=${encodeURIComponent(url)}`;
+
+        console.log("Fetching:", apiUrl);
+
+        try {
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+
+          console.log("API Response:", data);
+          document.getElementById("response").textContent = JSON.stringify(
+            data,
+            null,
+            2
+          );
+
+          if (data.html) {
+            console.log("Injecting HTML...");
+            const container = document.getElementById("embed1");
+            container.innerHTML = data.html;
+
+            // Check if iframe is there
+            const iframes = container.querySelectorAll("iframe");
+            console.log("Iframes found:", iframes.length);
+            iframes.forEach((iframe) => {
+              console.log("Iframe src:", iframe.src);
+              console.log("Iframe style:", iframe.getAttribute("style"));
+            });
+          } else {
+            document.getElementById("embed1").innerHTML =
+              '<p style="color: red;">No HTML in response</p>';
+          }
+        } catch (e) {
+          console.error("Error:", e);
+          document.getElementById("embed1").innerHTML =
+            '<p style="color: red;">Error: ' + e.message + "</p>";
+        }
+      }
+
+      testEmbed();
+    </script>
+  </body>
+</html>

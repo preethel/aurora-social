@@ -1,5 +1,5 @@
 import { AlertCircle, ExternalLink, Loader2 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PLATFORM_COLORS } from "../constants";
 import { Platform } from "../types";
 
@@ -91,11 +91,20 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
         .then((data) => {
           console.log("[SafeEmbed] Got data from backend:", {
             hasHtml: !!data.html,
+            dataKeys: Object.keys(data),
+            htmlLength: data.html?.length,
           });
           if (data.html) {
+            console.log(
+              "[SafeEmbed] Setting HTML:",
+              data.html.substring(0, 100)
+            );
             setIframelyHtml(data.html);
           } else {
             // API returned valid JSON but no HTML (e.g. link not supported)
+            console.warn(
+              "[SafeEmbed] No HTML in response, falling back to link-only"
+            );
             throw new Error("No HTML in response");
           }
         })
@@ -118,16 +127,32 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, platform]);
 
-  // Inject HTML from API when available
-  useEffect(() => {
+  // Inject HTML from API when available - use useLayoutEffect for synchronous DOM update
+  useLayoutEffect(() => {
     if (iframelyHtml && containerRef.current) {
-      // Clear container first
-      containerRef.current.innerHTML = "";
-      // Create a wrapper div to contain the API-provided HTML
-      const wrapper = document.createElement("div");
-      wrapper.innerHTML = iframelyHtml;
-      containerRef.current.appendChild(wrapper);
-      executeScripts(containerRef.current);
+      console.log("[SafeEmbed] useLayoutEffect: Injecting HTML into container");
+      try {
+        // Direct innerHTML assignment for fastest rendering
+        containerRef.current.innerHTML = iframelyHtml;
+
+        // Ensure iframes have proper attributes for Iframely embeds
+        const iframes = containerRef.current.querySelectorAll("iframe");
+        iframes.forEach((iframe) => {
+          // Allow Iframely's iframe.ly domain
+          iframe.setAttribute(
+            "sandbox",
+            "allow-same-origin allow-scripts allow-popups allow-presentation"
+          );
+        });
+
+        executeScripts(containerRef.current);
+        console.log(
+          "[SafeEmbed] HTML injected successfully, iframe count:",
+          iframes.length
+        );
+      } catch (e) {
+        console.error("[SafeEmbed] Error injecting HTML:", e);
+      }
     }
   }, [iframelyHtml]);
 
@@ -245,16 +270,19 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
 
   return (
     <div
-      className={`w-full overflow-hidden ${
+      className={`w-full overflow-visible ${
         isMinimal ? "" : "bg-white rounded-lg border border-gray-200"
       }`}
     >
       <div
         ref={containerRef}
-        className={`w-full flex justify-center items-center ${
-          isMinimal ? "min-h-[50px]" : "min-h-[200px] p-2"
-        }`}
-        style={{ maxWidth: "100%", overflowX: "auto" }}
+        className={`w-full ${isMinimal ? "min-h-[50px]" : "min-h-[300px]"}`}
+        style={{
+          maxWidth: "100%",
+          overflow: "visible",
+          display: "block",
+          padding: iframelyHtml ? "0" : "1rem",
+        }}
       />
       {!isMinimal && (
         <div className="bg-gray-50 text-gray-500 text-xs p-2 flex items-center justify-between border-t border-gray-100">
