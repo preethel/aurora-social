@@ -25,13 +25,13 @@ else
   docker compose -f compose.yml up -d
   echo "✅ Development deployment complete!"
   echo "🌐 Access your app at: http://localhost:3000"
-  echo "📊 View logs: docker-compose logs -f aurora-social"
+  echo "📊 View logs: docker compose logs -f aurora-social"
 fi
 
 # Show status
 echo ""
 echo "📋 Container Status:"
-docker-compose -f docker-compose${ENV:+.${ENV}}.yml ps
+docker compose -f compose${ENV:+.${ENV}}.yml ps
 
 # Health check
 echo ""
