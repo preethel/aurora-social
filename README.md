@@ -46,6 +46,7 @@ chmod +x vm-setup.sh
 ```
 
 This script will:
+
 - ✅ Install Docker (if not already installed)
 - ✅ Configure firewall (ports 80, 443, 22)
 - ✅ Create `.env` file with environment variables

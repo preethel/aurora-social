@@ -80,22 +80,26 @@ az containerapp create \
 ### Method 1: Using .env File (Recommended)
 
 1. **SSH into your Azure VM:**
+
    ```bash
    ssh azureuser@<your-vm-ip>
    ```
 
 2. **Clone your repository:**
+
    ```bash
    git clone https://github.com/preethel/aurora-social.git
    cd aurora-social
    ```
 
 3. **Create .env file:**
+
    ```bash
    nano .env
    ```
 
 4. **Add environment variables:**
+
    ```env
    VITE_TEST_MODE=true
    IFRAMELY_API_KEY=<your-api-key>
@@ -114,11 +118,13 @@ az containerapp create \
 ### Method 2: Using systemd Environment File
 
 1. **Create environment file in system location:**
+
    ```bash
    sudo nano /etc/aurora-social.env
    ```
 
 2. **Add variables:**
+
    ```env
    VITE_TEST_MODE=true
    IFRAMELY_API_KEY=your-api-key-here
@@ -127,6 +133,7 @@ az containerapp create \
    ```
 
 3. **Secure the file:**
+
    ```bash
    sudo chmod 600 /etc/aurora-social.env
    sudo chown root:root /etc/aurora-social.env
@@ -140,11 +147,13 @@ az containerapp create \
 ### Method 3: Export Environment Variables in Shell
 
 1. **Add to ~/.bashrc or ~/.zshrc:**
+
    ```bash
    nano ~/.bashrc
    ```
 
 2. **Add at the end:**
+
    ```bash
    export VITE_TEST_MODE=true
    export IFRAMELY_API_KEY=<your-api-key>
@@ -153,6 +162,7 @@ az containerapp create \
    ```
 
 3. **Reload shell:**
+
    ```bash
    source ~/.bashrc
    ```
@@ -181,55 +191,58 @@ docker run -d \
 ### VM Setup Prerequisites
 
 1. **Install Docker:**
+
    ```bash
    # Update package index
    sudo apt-get update
-   
+
    # Install dependencies
    sudo apt-get install -y \
      ca-certificates \
      curl \
      gnupg \
      lsb-release
-   
+
    # Add Docker's official GPG key
    sudo mkdir -m 0755 -p /etc/apt/keyrings
    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
      sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-   
+
    # Set up repository
    echo \
      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
      https://download.docker.com/linux/ubuntu \
      $(lsb_release -cs) stable" | \
      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-   
+
    # Install Docker Engine
    sudo apt-get update
    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-   
+
    # Add your user to docker group
    sudo usermod -aG docker $USER
    newgrp docker
    ```
 
 2. **Verify Docker installation:**
+
    ```bash
    docker --version
    docker compose version
    ```
 
 3. **Configure Firewall:**
+
    ```bash
    # Allow port 80 (HTTP)
    sudo ufw allow 80/tcp
-   
+
    # Allow port 443 (HTTPS) if using SSL
    sudo ufw allow 443/tcp
-   
+
    # Allow SSH (if not already allowed)
    sudo ufw allow 22/tcp
-   
+
    # Enable firewall
    sudo ufw enable
    sudo ufw status

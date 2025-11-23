@@ -21,6 +21,7 @@ chmod +x vm-setup.sh
 ## 📋 Manual Setup Commands
 
 ### Install Docker
+
 ```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
@@ -29,6 +30,7 @@ newgrp docker
 ```
 
 ### Configure Environment
+
 ```bash
 cat > .env << EOF
 VITE_TEST_MODE=true
@@ -39,6 +41,7 @@ EOF
 ```
 
 ### Build & Deploy
+
 ```bash
 # Build image
 docker build --build-arg VITE_TEST_MODE=true -t aurora-social:latest .
@@ -55,6 +58,7 @@ docker run -d \
 ## 🔧 Useful Commands
 
 ### Container Management
+
 ```bash
 # View logs
 docker logs -f aurora-social
@@ -73,6 +77,7 @@ docker stop aurora-social && docker rm aurora-social
 ```
 
 ### Update Application
+
 ```bash
 # Pull latest changes
 cd aurora-social
@@ -85,6 +90,7 @@ docker run -d --name aurora-social -p 80:8080 --env-file .env --restart unless-s
 ```
 
 ### Monitoring
+
 ```bash
 # Container status
 docker ps -a
@@ -121,11 +127,13 @@ sudo ufw status
 ## 🌐 Access Application
 
 After deployment, access your application at:
+
 ```
 http://<your-vm-public-ip>
 ```
 
 To find your VM's public IP:
+
 ```bash
 curl ifconfig.me
 ```
@@ -134,18 +142,19 @@ curl ifconfig.me
 
 Required variables in `.env` file:
 
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `VITE_TEST_MODE` | `true` | Load sample posts |
-| `IFRAMELY_API_KEY` | `your-key` | Iframely API key |
-| `PORT` | `8080` | Internal port |
-| `NODE_ENV` | `production` | Environment |
+| Variable           | Value        | Description       |
+| ------------------ | ------------ | ----------------- |
+| `VITE_TEST_MODE`   | `true`       | Load sample posts |
+| `IFRAMELY_API_KEY` | `your-key`   | Iframely API key  |
+| `PORT`             | `8080`       | Internal port     |
+| `NODE_ENV`         | `production` | Environment       |
 
 **Important:** `VITE_TEST_MODE` must be set during build as `--build-arg`
 
 ## 🐛 Troubleshooting
 
 ### Container won't start
+
 ```bash
 # Check logs
 docker logs aurora-social
@@ -158,6 +167,7 @@ cat .env
 ```
 
 ### No posts showing
+
 ```bash
 # Rebuild with VITE_TEST_MODE
 docker build --build-arg VITE_TEST_MODE=true -t aurora-social:latest .
@@ -167,6 +177,7 @@ docker history aurora-social:latest | grep VITE_TEST_MODE
 ```
 
 ### Can't access from browser
+
 ```bash
 # Check firewall
 sudo ufw status
@@ -182,6 +193,7 @@ curl http://localhost
 ```
 
 ### Out of disk space
+
 ```bash
 # Clean up Docker
 docker system prune -a
@@ -197,6 +209,7 @@ du -sh /var/lib/docker
 ## 🔄 Backup & Restore
 
 ### Backup (if using volume for data)
+
 ```bash
 docker run --rm \
   --volumes-from aurora-social \
@@ -205,6 +218,7 @@ docker run --rm \
 ```
 
 ### Restore
+
 ```bash
 docker run --rm \
   --volumes-from aurora-social \
@@ -228,22 +242,26 @@ docker inspect --format='{{json .State.Health}}' aurora-social | jq
 ## 🔐 Security Best Practices
 
 1. **Keep .env file secure:**
+
    ```bash
    chmod 600 .env
    ```
 
 2. **Don't commit .env to git:**
+
    ```bash
    echo ".env" >> .gitignore
    ```
 
 3. **Use SSH keys instead of passwords:**
+
    ```bash
    ssh-keygen -t ed25519
    ssh-copy-id azureuser@<vm-ip>
    ```
 
 4. **Regular updates:**
+
    ```bash
    sudo apt-get update && sudo apt-get upgrade -y
    ```
