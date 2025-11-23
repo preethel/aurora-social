@@ -1,7 +1,11 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Iframely proxy: Uses server-side secret (IFRAMELY_API_KEY) to avoid exposing it to clients.
 // Falls back to VITE_IFRAMELY_API_KEY only if mistakenly set (not recommended for production).

@@ -89,7 +89,9 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
           return res.json();
         })
         .then((data) => {
-          console.log("[SafeEmbed] Got data from backend:", { hasHtml: !!data.html });
+          console.log("[SafeEmbed] Got data from backend:", {
+            hasHtml: !!data.html,
+          });
           if (data.html) {
             setIframelyHtml(data.html);
           } else {
