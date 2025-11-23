@@ -79,9 +79,16 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
       const apiUrl = `/api/iframely?url=${encodeURIComponent(trimmed)}`;
       console.log("[SafeEmbed] Fetching from backend:", apiUrl);
 
-      // Create a timeout promise (10 seconds)
+      // Telegram needs more time due to CDN latency
+      const timeoutDuration = trimmed.includes("t.me") ? 20000 : 10000;
+
+      // Create a timeout promise (10-20 seconds depending on platform)
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Request timeout (10s)")), 10000);
+        setTimeout(
+          () =>
+            reject(new Error(`Request timeout (${timeoutDuration / 1000}s)`)),
+          timeoutDuration
+        );
       });
 
       Promise.race([
@@ -114,12 +121,25 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
         })
         .catch((err) => {
           console.warn(
-            "[SafeEmbed] Iframely API failed, falling back to link-only view:",
+            "[SafeEmbed] Iframely API failed, falling back to direct embed:",
             err
           );
-          // When API fails, show the link directly instead of attempting client-side discovery
-          setIsLinkOnly(true);
-          setSafeUrl(trimmed);
+          // When API fails, try to load embed directly via Iframely CDN
+          const fallbackHtml = `
+            <div style="max-width: 100%;">
+              <iframe
+                src="https://iframe.ly/api/iframe?url=${encodeURIComponent(
+                  trimmed
+                )}&app=1"
+                scrolling="no"
+                frameborder="0"
+                style="border: none; overflow: hidden; width: 100%; height: auto; min-height: 300px;"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-presentation allow-popups-to-escape-sandbox"
+              ></iframe>
+            </div>
+          `;
+          setIframelyHtml(fallbackHtml);
         })
         .finally(() => {
           setIsLoading(false);
@@ -142,11 +162,13 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
         // Ensure iframes have proper attributes for Iframely embeds
         const iframes = containerRef.current.querySelectorAll("iframe");
         iframes.forEach((iframe) => {
-          // Allow Iframely's iframe.ly domain
+          // Allow Iframely's iframe.ly domain with all necessary permissions
           iframe.setAttribute(
             "sandbox",
-            "allow-same-origin allow-scripts allow-popups allow-presentation"
+            "allow-same-origin allow-scripts allow-popups allow-presentation allow-popups-to-escape-sandbox"
           );
+          // Also allow via attribute
+          iframe.allowFullscreen = true;
         });
 
         executeScripts(containerRef.current);
