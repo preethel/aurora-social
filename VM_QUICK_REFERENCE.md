@@ -190,7 +190,34 @@ docker port aurora-social
 
 # Test locally
 curl http://localhost
+
+# Test externally (from your computer)
+curl http://<vm-ip>
 ```
+
+### YouTube videos show "Watch on YouTube" instead of playing
+
+**This is normal for region-restricted videos!**
+
+The app includes smart fallbacks:
+
+- Shows video thumbnail with play button
+- Click thumbnail to attempt loading the video
+- If region-blocked, shows "Watch on YouTube" button
+- Users can click to watch directly on YouTube
+
+**Why this happens:**
+
+- Azure regions (especially East Asia) may have restrictions
+- Some videos are geo-blocked by content owners
+- YouTube's embed policies vary by region
+
+**What works:**
+
+- Most public YouTube videos will embed fine
+- Thumbnail always loads (shows preview)
+- Direct YouTube link always available
+- No app configuration needed - it's automatic!
 
 ### Out of disk space
 

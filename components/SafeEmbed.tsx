@@ -2,6 +2,7 @@ import { AlertCircle, ExternalLink, Loader2 } from "lucide-react";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PLATFORM_COLORS } from "../constants";
 import { Platform } from "../types";
+import { YouTubeEmbed } from "./YouTubeEmbed";
 
 interface SafeEmbedProps {
   content: string;
@@ -19,6 +20,7 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
   const [safeUrl, setSafeUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [iframelyHtml, setIframelyHtml] = useState<string | null>(null);
+  const [youtubeId, setYoutubeId] = useState<string | null>(null);
 
   // Helper to extract YouTube Video ID (Enhanced Regex for Shorts/Live/Embeds)
   const getYouTubeId = (url: string) => {
@@ -84,12 +86,14 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     setIsLinkOnly(false);
     setSafeUrl("");
     setIsLoading(false);
+    setYoutubeId(null);
 
     // 1. YouTube (Manual Override)
     // We handle this first and synchronously to ensure the specific responsive layout
     // and avoid API latency/errors for this common platform.
-    if (getYouTubeId(trimmed)) {
-      handleManualEmbed(trimmed, isUrl, strictLinkPlatforms);
+    const ytId = getYouTubeId(trimmed);
+    if (ytId) {
+      setYoutubeId(ytId);
       return;
     }
 
@@ -210,35 +214,14 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // 1. YouTube Manual Embed - Direct embed without API call
-    const youTubeId = getYouTubeId(trimmed);
-    if (youTubeId) {
-      setIsLinkOnly(false);
-      // Directly embed YouTube video
-      if (containerRef.current) {
-        containerRef.current.innerHTML = `
-          <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;" class="youtube-container">
-            <iframe 
-              src="https://www.youtube.com/embed/${youTubeId}?rel=0" 
-              style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" 
-              allowfullscreen 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              loading="lazy"
-            ></iframe>
-          </div>
-        `;
-      }
-      return;
-    }
-
-    // 2. Strict Link Platforms
+    // 1. Strict Link Platforms
     if (strictLinkPlatforms.includes(platform)) {
       setIsLinkOnly(true);
       setSafeUrl(trimmed);
       return;
     }
 
-    // 3. Generic URL Fallback
+    // 2. Generic URL Fallback
     // If no specific handler is available, show as link-only
     if (isUrl) {
       setIsLinkOnly(true);
@@ -246,7 +229,7 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
       return;
     }
 
-    // 4. Raw HTML Embed Code
+    // 3. Raw HTML Embed Code
     // User pasted an <iframe> or <blockquote class="instagram-media"> etc.
     setIsLinkOnly(false);
     container.innerHTML = trimmed;
@@ -261,6 +244,29 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
   };
 
   const isMinimal = variant === "minimal";
+
+  // Special handling for YouTube
+  if (youtubeId) {
+    return (
+      <div
+        className={`w-full overflow-visible ${
+          isMinimal ? "" : "bg-white rounded-lg border border-gray-200"
+        }`}
+      >
+        <div className={isMinimal ? "" : "p-2"}>
+          <YouTubeEmbed videoId={youtubeId} />
+        </div>
+        {!isMinimal && (
+          <div className="bg-gray-50 text-gray-500 text-xs p-2 flex items-center justify-between border-t border-gray-100">
+            <div className="flex items-center gap-1">
+              <AlertCircle size={12} />
+              <span>YouTube Video</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

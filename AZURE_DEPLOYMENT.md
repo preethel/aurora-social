@@ -406,9 +406,27 @@ docker build --build-arg VITE_TEST_MODE=true -t aurora-social .
 
 ### YouTube previews not working
 
-**Problem**: YouTube videos not displaying
+**Problem**: YouTube videos showing "Video unavailable" or "Watch on YouTube"
 
-**Solution**: This should be fixed now. The app uses direct YouTube embeds without API calls. Ensure your browser/network allows YouTube iframes.
+**Solution**: This is usually due to regional restrictions. The app now includes:
+
+1. **Automatic fallback** to `youtube-nocookie.com` domain
+2. **Thumbnail preview** with play button - click to load video
+3. **Direct "Watch on YouTube" link** - always available as backup
+4. **Multiple thumbnail quality attempts** - ensures preview loads
+
+**Regional Restrictions (Azure East Asia, etc.):**
+
+- Some videos are geo-blocked and cannot be embedded
+- The app will show a thumbnail and "Watch on YouTube" button
+- Users can click to watch directly on YouTube's website
+- This is a YouTube limitation, not an app issue
+
+**Workaround for development:**
+
+- Use VPN if testing from restricted regions
+- The embed will work for most public videos
+- Private/restricted videos will always show fallback
 
 ### Iframely embeds failing
 
