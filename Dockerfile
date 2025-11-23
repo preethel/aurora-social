@@ -12,6 +12,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Build argument for test mode (passed from docker-compose or build command)
+ARG VITE_TEST_MODE=false
+ENV VITE_TEST_MODE=${VITE_TEST_MODE}
+
 # Build the application
 RUN npm run build
 

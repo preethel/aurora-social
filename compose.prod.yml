@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_TEST_MODE: ${VITE_TEST_MODE:-true}
     container_name: aurora-social-app
     ports:
       - "3000:8080"
@@ -12,7 +14,7 @@ services:
       - NODE_ENV=production
       - PORT=8080
       - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
-      - VITE_TEST_MODE=${VITE_TEST_MODE:-false}
+      - VITE_TEST_MODE=${VITE_TEST_MODE:-true}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]

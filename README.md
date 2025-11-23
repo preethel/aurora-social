@@ -14,9 +14,62 @@ View your app in AI Studio: https://ai.studio/apps/drive/1SKAfrJLZLP9ZcZMHN3yvDZ
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Set `VITE_TEST_MODE=true` to load sample posts
+   - Set `IFRAMELY_API_KEY` to your Iframely API key
 3. Run the app:
    `npm run dev`
+
+## Deploy with Docker
+
+### Local Docker Deployment
+
+```bash
+# Production build
+./deploy.sh prod
+
+# Development build
+./deploy.sh dev
+```
+
+### Azure VM Quick Setup
+
+**One-command setup for Azure Virtual Machines:**
+
+```bash
+# Make script executable
+chmod +x vm-setup.sh
+
+# Run setup script
+./vm-setup.sh
+```
+
+This script will:
+- ✅ Install Docker (if not already installed)
+- ✅ Configure firewall (ports 80, 443, 22)
+- ✅ Create `.env` file with environment variables
+- ✅ Build Docker image with proper build arguments
+- ✅ Deploy and start the application
+- ✅ Verify deployment
+
+**Manual VM setup:** See [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) for detailed VM deployment instructions.
+
+### Azure Container Apps Deployment
+
+See [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) for comprehensive Azure deployment guide.
+
+**Quick Setup:**
+
+1. Ensure `.env` file has `VITE_TEST_MODE=true`
+2. Build with: `docker build --build-arg VITE_TEST_MODE=true -t aurora-social .`
+3. Set environment variables in Azure:
+   - `VITE_TEST_MODE=true` (as build argument)
+   - `IFRAMELY_API_KEY=<your-key>` (as secret)
+   - `NODE_ENV=production`
+   - `PORT=8080`
+
+**Important:** `VITE_TEST_MODE` must be set during Docker build, not just at runtime!
 
 ## Iframely Integration
 
