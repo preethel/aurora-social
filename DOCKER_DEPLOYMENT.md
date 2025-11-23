@@ -62,12 +62,14 @@ http://<your-vm-ip>:3000
 ## Docker Compose Files
 
 ### `docker-compose.yml` (Development)
+
 - Test mode: **enabled** (auto-loads test posts)
 - Health checks: enabled
 - Logs: verbose
 - Port mapping: 3000:8080
 
 ### `docker-compose.prod.yml` (Production)
+
 - Test mode: **disabled** by default
 - Optimized logging (10MB max, 3 files)
 - Health checks: enabled
@@ -193,6 +195,7 @@ curl -I http://localhost:3000
 ```
 
 Expected response:
+
 ```
 HTTP/1.1 200 OK
 ```
@@ -226,6 +229,7 @@ volumes:
 ## Support
 
 For issues:
+
 1. Check logs: `docker-compose logs aurora-social`
 2. Verify `.env` configuration
 3. Ensure all ports are available
