@@ -31,9 +31,14 @@ COPY --from=builder /app/dist ./dist
 
 # Copy server file
 COPY server.js .
+COPY .env .
 
-# Expose port
-EXPOSE 3000
+# Expose port (default 8080, but can be overridden)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080), (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 # Start the application
 CMD ["node", "server.js"]

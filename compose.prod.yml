@@ -11,8 +11,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8080
-      - IFRAMELY_API_KEY=${IFRAMELY_API_KEY:-718690c4bc3c1be271bbd3}
-      - VITE_TEST_MODE=${VITE_TEST_MODE:-true}
+      - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
+      - VITE_TEST_MODE=${VITE_TEST_MODE:-false}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
@@ -22,8 +22,11 @@ services:
       start_period: 40s
     networks:
       - aurora-network
-    volumes:
-      - ./dist:/app/dist:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   aurora-network:
