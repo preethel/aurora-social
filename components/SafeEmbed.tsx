@@ -23,11 +23,31 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
   // Helper to extract YouTube Video ID (Enhanced Regex for Shorts/Live/Embeds)
   const getYouTubeId = (url: string) => {
     if (!url) return null;
-    // Robust regex for ID extraction
-    const regExp =
-      /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})(?:[\?&].*)?$/;
-    const match = url.match(regExp);
-    return match ? match[1] : null;
+
+    // Try multiple patterns to extract YouTube video ID
+    const patterns = [
+      // youtu.be links (with or without query params)
+      /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[?&].*)?/,
+      // youtube.com/watch?v=
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})(?:[&].*)?/,
+      // youtube.com/embed/
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})(?:[?&].*)?/,
+      // youtube.com/v/
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([a-zA-Z0-9_-]{11})(?:[?&].*)?/,
+      // youtube.com/shorts/
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})(?:[?&].*)?/,
+      // m.youtube.com
+      /(?:https?:\/\/)?(?:m\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})(?:[&].*)?/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    return null;
   };
 
   // Helper to re-execute scripts in injected HTML
@@ -190,41 +210,24 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // 1. YouTube Manual Embed - Use server endpoint for better region support
+    // 1. YouTube Manual Embed - Direct embed without API call
     const youTubeId = getYouTubeId(trimmed);
     if (youTubeId) {
       setIsLinkOnly(false);
-      setIsLoading(true);
-
-      // Fetch from server endpoint which handles region restrictions better
-      fetch(`/api/youtube?id=${youTubeId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.html && containerRef.current) {
-            containerRef.current.innerHTML = data.html;
-          }
-        })
-        .catch((err) => {
-          console.warn(
-            "[SafeEmbed] YouTube server embed failed, using fallback:",
-            err
-          );
-          // Fallback to direct embed
-          if (containerRef.current) {
-            containerRef.current.innerHTML = `
-              <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;" class="youtube-container">
-                <iframe 
-                  src="https://www.youtube.com/embed/${youTubeId}?rel=0" 
-                  style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" 
-                  allowfullscreen 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  loading="lazy"
-                ></iframe>
-              </div>
-            `;
-          }
-        })
-        .finally(() => setIsLoading(false));
+      // Directly embed YouTube video
+      if (containerRef.current) {
+        containerRef.current.innerHTML = `
+          <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;" class="youtube-container">
+            <iframe 
+              src="https://www.youtube.com/embed/${youTubeId}?rel=0" 
+              style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" 
+              allowfullscreen 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              loading="lazy"
+            ></iframe>
+          </div>
+        `;
+      }
       return;
     }
 
