@@ -60,6 +60,11 @@ app.get('/api/iframely', iframelyLimiter, async (req, res) => {
   try {
     const upstream = await fetch(`https://iframe.ly/api/oembed?url=${encodeURIComponent(targetUrl)}&api_key=${apiKey}&omit_script=1`);
     if (!upstream.ok) {
+      console.warn('[IFRAMELY_PROXY] Upstream non-OK', {
+        status: upstream.status,
+        url: targetUrl,
+        planKeySuffix: apiKey.slice(-6)
+      });
       return res.status(upstream.status).json({ error: `Upstream error ${upstream.status}` });
     }
     const data = await upstream.json();
@@ -68,6 +73,10 @@ app.get('/api/iframely', iframelyLimiter, async (req, res) => {
     setCache(cacheKey, shaped);
     res.json(shaped);
   } catch (e) {
+    console.error('[IFRAMELY_PROXY] Fetch error', {
+      message: e && e.message,
+      url: targetUrl
+    });
     res.status(502).json({ error: 'Proxy fetch failed', detail: (e && e.message) || 'Unknown error' });
   }
 });
