@@ -45,7 +45,8 @@ app.get('/api/iframely', iframelyLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Missing url parameter' });
   }
 
-  const apiKey = process.env.IFRAMELY_API_KEY || process.env.VITE_IFRAMELY_API_KEY;
+  // Use server-side API key (more permissive, higher rate limits)
+  const apiKey = process.env.IFRAMELY_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'Iframely API key not configured on server' });
   }

@@ -32,7 +32,7 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
 
   // Helper to re-execute scripts in injected HTML
   const executeScripts = (container: HTMLElement) => {
-    // 1. Standard script tag re-injection (for raw HTML embeds)
+    // Standard script tag re-injection (for raw HTML embeds)
     const scripts = container.querySelectorAll("script");
     scripts.forEach((oldScript) => {
       const newScript = document.createElement("script");
@@ -43,33 +43,7 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
       oldScript.parentNode?.replaceChild(newScript, oldScript);
     });
 
-    // 2. Iframely Discovery (Client-side fallback)
-    const loadIframely = () => {
-      if ((window as any).iframely) {
-        try {
-          // Explicitly tell Iframely to scan this container
-          (window as any).iframely.load(
-            container,
-            container.querySelector("a[data-iframely-url]")
-          );
-        } catch (e) {
-          console.debug("Iframely load error", e);
-        }
-        return true;
-      }
-      return false;
-    };
-
-    // Attempt to load Iframely immediately, or poll for the global script
-    if (!loadIframely()) {
-      let attempts = 0;
-      const interval = setInterval(() => {
-        attempts++;
-        if (loadIframely() || attempts > 20) clearInterval(interval); // Stop after ~10 seconds
-      }, 500);
-    }
-
-    // 3. Instagram Process (if available globally)
+    // Instagram Process (if available globally)
     if ((window as any).instgrm) {
       try {
         (window as any).instgrm.Embeds.process();
@@ -185,22 +159,11 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
       return;
     }
 
-    // 3. Generic URL Fallback (Facebook, Instagram, Twitter, etc.)
-    // If API failed or wasn't used, we insert a data-iframely-url link.
-    // The global embed.js script will find this and replace it with a card.
+    // 3. Generic URL Fallback
+    // If no specific handler is available, show as link-only
     if (isUrl) {
-      setIsLinkOnly(false);
-      // We render a visible link initially so if the script fails, the user still sees something.
-      container.innerHTML = `
-          <div class="iframely-embed" style="width: 100%;">
-             <div class="iframely-responsive" style="padding-bottom: 50%; padding-top: 120px; background: #f9fafb; text-align: center; border-radius: 8px;">
-                <a href="${trimmed}" data-iframely-url style="color: #6b7280; text-decoration: none; font-family: sans-serif;">
-                   Preview loading...
-                </a>
-             </div>
-          </div>
-        `;
-      executeScripts(container);
+      setIsLinkOnly(true);
+      setSafeUrl(trimmed);
       return;
     }
 
