@@ -37,4 +37,4 @@ docker-compose -f docker-compose${ENV:+.${ENV}}.yml ps
 echo ""
 echo "⏳ Waiting for app to be healthy..."
 sleep 5
-docker-compose -f docker-compose${ENV:+.${ENV}}.yml ps
+docker compose -f compose${ENV:+.${ENV}}.yml ps
