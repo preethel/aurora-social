@@ -31,7 +31,6 @@ COPY --from=builder /app/dist ./dist
 
 # Copy server file
 COPY server.js .
-COPY .env .
 
 # Expose port (default 8080, but can be overridden)
 EXPOSE 8080
