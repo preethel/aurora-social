@@ -1,11 +1,8 @@
 import { Platform } from "./types";
 
-// USING THE CLIENT KEY HASH (MD5) FOR BROWSER USAGE
-// Now reads build-time Vite env var `VITE_IFRAMELY_API_KEY` (set in .env or Azure App Settings)
-// Falls back to previous literal to avoid breaking existing behavior if env not provided.
-export const IFRAMELY_API_KEY =
-  (import.meta as any).env?.VITE_IFRAMELY_API_KEY ||
-  "22823aace0d77c6b9fd20984a04a955a";
+// Removed hardcoded Iframely key. Frontend no longer needs the key; server proxy uses IFRAMELY_API_KEY.
+// Keep empty string fallback so previous import sites don't break if still referenced.
+export const IFRAMELY_API_KEY = ""; // Deprecated: avoid using client-side.
 
 export const PLATFORM_COLORS: Record<Platform, string> = {
   [Platform.FacebookPage]: "#1877F2",
