@@ -82,12 +82,20 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
       setIsLoading(true);
       const apiUrl = `/api/iframely?url=${encodeURIComponent(trimmed)}`;
       console.log("[SafeEmbed] Fetching from backend:", apiUrl);
-      fetch(apiUrl)
-        .then((res) => {
+      
+      // Create a timeout promise (10 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Request timeout (10s)")), 10000);
+      });
+      
+      Promise.race([
+        fetch(apiUrl).then((res) => {
           console.log("[SafeEmbed] Backend response status:", res.status);
           if (!res.ok) throw new Error(`API Error: ${res.status}`);
           return res.json();
-        })
+        }),
+        timeoutPromise
+      ])
         .then((data) => {
           console.log("[SafeEmbed] Got data from backend:", {
             hasHtml: !!data.html,
