@@ -55,11 +55,7 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     const trimmed = content.trim();
     const isUrl = /^(http|https):\/\/[^ "]+$/.test(trimmed);
 
-    const strictLinkPlatforms = [
-      Platform.WhatsApp,
-      Platform.IMO,
-      Platform.Telegram,
-    ];
+    const strictLinkPlatforms = [Platform.WhatsApp, Platform.IMO];
 
     // Always attempt proxy-based Iframely fetch for non-strict platforms when content is a URL.
     const shouldTryIframely = isUrl && !strictLinkPlatforms.includes(platform);
@@ -176,14 +172,16 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     const youTubeId = getYouTubeId(trimmed);
     if (youTubeId) {
       setIsLinkOnly(false);
-      // Simplified attributes to reduce 'Error 153' (removed strict-origin policy, simplified allow list)
+      // Try nocookie first, fallback to regular if fails
       container.innerHTML = `
-        <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;">
+        <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;" class="youtube-container">
           <iframe 
-            src="https://www.youtube.com/embed/${youTubeId}" 
+            src="https://www.youtube-nocookie.com/embed/${youTubeId}?rel=0" 
             style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" 
             allowfullscreen 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            loading="lazy"
+            onerror="this.src='https://www.youtube.com/embed/${youTubeId}?rel=0'"
           ></iframe>
         </div>
       `;
