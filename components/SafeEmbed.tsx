@@ -190,23 +190,41 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // 1. YouTube Manual Embed
+    // 1. YouTube Manual Embed - Use server endpoint for better region support
     const youTubeId = getYouTubeId(trimmed);
     if (youTubeId) {
       setIsLinkOnly(false);
-      // Try nocookie first, fallback to regular if fails
-      container.innerHTML = `
-        <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;" class="youtube-container">
-          <iframe 
-            src="https://www.youtube-nocookie.com/embed/${youTubeId}?rel=0" 
-            style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" 
-            allowfullscreen 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            loading="lazy"
-            onerror="this.src='https://www.youtube.com/embed/${youTubeId}?rel=0'"
-          ></iframe>
-        </div>
-      `;
+      setIsLoading(true);
+
+      // Fetch from server endpoint which handles region restrictions better
+      fetch(`/api/youtube?id=${youTubeId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.html && containerRef.current) {
+            containerRef.current.innerHTML = data.html;
+          }
+        })
+        .catch((err) => {
+          console.warn(
+            "[SafeEmbed] YouTube server embed failed, using fallback:",
+            err
+          );
+          // Fallback to direct embed
+          if (containerRef.current) {
+            containerRef.current.innerHTML = `
+              <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;" class="youtube-container">
+                <iframe 
+                  src="https://www.youtube.com/embed/${youTubeId}?rel=0" 
+                  style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" 
+                  allowfullscreen 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  loading="lazy"
+                ></iframe>
+              </div>
+            `;
+          }
+        })
+        .finally(() => setIsLoading(false));
       return;
     }
 

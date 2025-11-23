@@ -86,6 +86,29 @@ app.get('/api/iframely', iframelyLimiter, async (req, res) => {
   }
 });
 
+// YouTube embed proxy - handles region restrictions better
+app.get('/api/youtube', (req, res) => {
+  const videoId = req.query.id;
+  if (!videoId) {
+    return res.status(400).json({ error: 'Missing video ID' });
+  }
+
+  // Return embed HTML with multiple fallback options
+  const html = `
+    <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;" class="youtube-container">
+      <iframe 
+        src="https://www.youtube.com/embed/${videoId}?rel=0" 
+        style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" 
+        allowfullscreen 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        loading="lazy"
+      ></iframe>
+    </div>
+  `;
+  
+  res.json({ html, type: 'video', provider_name: 'YouTube' });
+});
+
 // Serve static files from the dist directory
 app.use(express.static(path.join(__dirname, 'dist')));
 
