@@ -122,10 +122,12 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
         })
         .catch((err) => {
           console.warn(
-            "Iframely API failed, falling back to client-side discovery:",
+            "Iframely API failed, falling back to link-only view:",
             err
           );
-          handleManualEmbed(trimmed, isUrl, strictLinkPlatforms);
+          // When API fails, show the link directly instead of attempting client-side discovery
+          setIsLinkOnly(true);
+          setSafeUrl(trimmed);
         })
         .finally(() => {
           setIsLoading(false);
@@ -140,7 +142,12 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
   // Inject HTML from API when available
   useEffect(() => {
     if (iframelyHtml && containerRef.current) {
-      containerRef.current.innerHTML = iframelyHtml;
+      // Clear container first
+      containerRef.current.innerHTML = "";
+      // Create a wrapper div to contain the API-provided HTML
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = iframelyHtml;
+      containerRef.current.appendChild(wrapper);
       executeScripts(containerRef.current);
     }
   }, [iframelyHtml]);
