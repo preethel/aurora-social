@@ -9,20 +9,20 @@ echo "🚀 Deploying Aurora Social in $ENV mode..."
 
 # Stop existing containers
 echo "⛔ Stopping existing containers..."
-docker-compose -f docker-compose${ENV:+.${ENV}}.yml down || true
+docker compose -f compose${ENV:+.${ENV}}.yml down || true
 
 # Build image
 echo "🔨 Building Docker image..."
-docker-compose -f docker-compose${ENV:+.${ENV}}.yml build --no-cache
+docker-compose -f compose${ENV:+.${ENV}}.yml build --no-cache
 
 # Start containers
 echo "🟢 Starting containers..."
 if [ "$ENV" = "prod" ]; then
-  docker-compose -f docker-compose.prod.yml up -d
+  docker compose -f compose.prod.yml up -d
   echo "✅ Production deployment complete!"
   echo "🌐 Access your app at: http://localhost:3000"
 else
-  docker-compose -f docker-compose.yml up -d
+  docker compose -f compose.yml up -d
   echo "✅ Development deployment complete!"
   echo "🌐 Access your app at: http://localhost:3000"
   echo "📊 View logs: docker-compose logs -f aurora-social"
