@@ -80,13 +80,16 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
     // 2. API Fetch (Strategy 1)
     if (shouldTryIframely) {
       setIsLoading(true);
-      // omit_script=1 prevents the API from sending the script tag again (we have it in index.html)
-      fetch(`/api/iframely?url=${encodeURIComponent(trimmed)}`)
+      const apiUrl = `/api/iframely?url=${encodeURIComponent(trimmed)}`;
+      console.log("[SafeEmbed] Fetching from backend:", apiUrl);
+      fetch(apiUrl)
         .then((res) => {
+          console.log("[SafeEmbed] Backend response status:", res.status);
           if (!res.ok) throw new Error(`API Error: ${res.status}`);
           return res.json();
         })
         .then((data) => {
+          console.log("[SafeEmbed] Got data from backend:", { hasHtml: !!data.html });
           if (data.html) {
             setIframelyHtml(data.html);
           } else {
@@ -96,7 +99,7 @@ export const SafeEmbed: React.FC<SafeEmbedProps> = ({
         })
         .catch((err) => {
           console.warn(
-            "Iframely API failed, falling back to link-only view:",
+            "[SafeEmbed] Iframely API failed, falling back to link-only view:",
             err
           );
           // When API fails, show the link directly instead of attempting client-side discovery
