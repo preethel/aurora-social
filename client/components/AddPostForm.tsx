@@ -1,9 +1,10 @@
 
-import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Platform, SocialPost, PostType } from '../types';
-import { PLATFORM_OPTIONS, PLATFORM_COLORS, BRAND_OPTIONS, POST_TYPES } from '../constants';
-import { Save, XCircle, Info, AtSign, Code, Image as ImageIcon, Link as LinkIcon, UploadCloud, FileText, List, Layers } from 'lucide-react';
+import { getCurrentUser } from '@/services/authService';
+import { AtSign, Code, FileText, Image as ImageIcon, Info, Layers, Link as LinkIcon, List, Save, UploadCloud, XCircle } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { BRAND_OPTIONS, PLATFORM_COLORS, PLATFORM_OPTIONS, POST_TYPES } from '../constants';
+import { Platform, PostType, SocialPost } from '../types';
 
 interface AddPostFormProps {
   onSave: (post: SocialPost) => void;
@@ -21,6 +22,10 @@ export const AddPostForm: React.FC<AddPostFormProps> = ({ onSave, onCancel, init
   // Get default values
   const defaultBrand = Object.keys(BRAND_OPTIONS)[0];
   const defaultCurrency = BRAND_OPTIONS[defaultBrand][0];
+  
+  // Get current logged-in user
+  const currentUser = getCurrentUser();
+  const loggedInUsername = currentUser?.username || '';
 
   const [formData, setFormData] = useState({
     platform: initialData?.platform || PLATFORM_OPTIONS[0] as Platform,
@@ -28,7 +33,7 @@ export const AddPostForm: React.FC<AddPostFormProps> = ({ onSave, onCancel, init
     accountName: initialData?.accountName || '',
     currency: initialData?.currency || defaultCurrency,
     creatorName: initialData?.creatorName || '',
-    postedBy: initialData?.postedBy || '',
+    postedBy: initialData?.postedBy || loggedInUsername,
     remarks: initialData?.remarks || '',
     content: initialData?.content || '',
     redirectLink: initialData?.redirectLink || '',
@@ -264,7 +269,8 @@ export const AddPostForm: React.FC<AddPostFormProps> = ({ onSave, onCancel, init
               placeholder="Who published it?"
               value={formData.postedBy}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900 placeholder-gray-400"
+              disabled={!initialData}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
             />
           </div>
           
