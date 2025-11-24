@@ -1,59 +1,81 @@
-# Build stage
-FROM node:20-alpine as builder
+# Multi-stage build for Aurora Social (TypeScript + Prisma)
 
-WORKDIR /app
+# Stage 1: Build client
+FROM node:20-alpine AS client-builder
 
-# Copy package files
-COPY package*.json ./
-COPY client/package*.json ./client/
-COPY server/package*.json ./server/
+WORKDIR /app/client
 
-# Install dependencies - using npm install for better Alpine Linux compatibility
-RUN npm install && \
-    cd client && \
-    rm -rf package-lock.json && \
-    npm install && \
-    cd ../server && \
-    npm install
+# Copy client package files
+COPY client/package*.json ./
 
-# Copy source code
-COPY client ./client
-COPY server ./server
-COPY .env* ./
+# Install dependencies
+RUN npm ci
 
-# Build argument for test mode (passed from docker-compose or build command)
-ARG VITE_TEST_MODE=false
-ENV VITE_TEST_MODE=${VITE_TEST_MODE}
+# Copy client source
+COPY client/ ./
 
-# Build the client application
-RUN cd client && npm run build
+# Build client
+RUN npm run build
 
-# Runtime stage
+# Stage 2: Build server
+FROM node:20-alpine AS server-builder
+
+WORKDIR /app/server
+
+# Copy server package files
+COPY server/package*.json ./
+COPY server/tsconfig.json ./
+
+# Install ALL dependencies (including dev for TypeScript compilation)
+RUN npm ci
+
+# Copy server source and Prisma schema
+COPY server/ ./
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Build TypeScript
+RUN npm run build
+
+# Stage 3: Production runtime
 FROM node:20-alpine
 
 WORKDIR /app
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 # Copy server package files
 COPY server/package*.json ./server/
 
 # Install production dependencies only
-RUN cd server && npm install --omit=dev
+WORKDIR /app/server
+RUN npm ci --omit=dev
 
-# Copy built client application from builder
-COPY --from=builder /app/client/dist ./client/dist
+# Copy Prisma schema and migrations
+COPY server/prisma ./prisma/
 
-# Copy server file
-COPY server/server.js ./server/
+# Generate Prisma Client in production
+RUN npx prisma generate
 
-# Copy environment files
-COPY .env* ./
+# Copy built server from builder
+COPY --from=server-builder /app/server/dist ./dist
 
-# Expose port (default 8080, but can be overridden)
+# Copy built client from client-builder
+COPY --from=client-builder /app/client/dist ../client/dist
+
+# Copy environment file template
+COPY .env.example ../.env.example
+
+WORKDIR /app/server
+
+# Expose port
 EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080), (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD curl -f http://localhost:8080 || exit 1
 
 # Start the application
-CMD ["node", "server/server.js"]
+CMD ["node", "dist/server.js"]

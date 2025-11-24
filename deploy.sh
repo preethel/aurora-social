@@ -1,58 +1,72 @@
 #!/bin/bash
 
-# Aurora Social - Docker Compose Deployment Script
-# Usage: ./deploy.sh [dev|prod]
+# Aurora Social - Production Deployment Script
+# For VM deployment with Docker
 
-ENV=${1:-dev}
+set -e
 
-echo "🚀 Deploying Aurora Social in $ENV mode..."
+echo "🚀 Aurora Social - Production Deployment"
+echo "========================================"
 
-# Load environment variables from .env file if it exists
-if [ -f .env ]; then
-  echo "📄 Loading environment variables from .env file..."
-  export $(cat .env | grep -v '^#' | xargs)
+# Check if .env exists
+if [ ! -f .env ]; then
+    echo "❌ Error: .env file not found!"
+    echo "📝 Please create .env file with required variables:"
+    echo "   - DB_USER"
+    echo "   - DB_PASSWORD"
+    echo "   - DB_NAME"
+    echo "   - JWT_SECRET"
+    echo "   - IFRAMELY_API_KEY"
+    exit 1
 fi
+
+# Load environment variables
+echo "📄 Loading environment variables..."
+export $(cat .env | grep -v '^#' | xargs)
 
 # Stop existing containers
 echo "⛔ Stopping existing containers..."
-docker compose -f compose${ENV:+.${ENV}}.yml down || true
+docker compose -f compose.prod.yml down || true
 
-# Build image with build arguments
-echo "🔨 Building Docker image..."
-if [ "$ENV" = "prod" ]; then
-  docker compose -f compose.prod.yml build --no-cache
-else
-  docker compose -f compose.dev.yaml build --no-cache
+# Pull latest code (if using git)
+if [ -d .git ]; then
+    echo "📥 Pulling latest code..."
+    git pull || echo "⚠️  Git pull failed or not needed"
 fi
 
-# Start containers
-echo "🟢 Starting containers..."
-if [ "$ENV" = "prod" ]; then
-  docker compose -f compose.prod.yml up -d
-  echo "✅ Production deployment complete!"
-  echo "🌐 Access your app at: http://localhost:3000"
-else
-  docker compose -f compose.dev.yaml up -d
-  echo "✅ Development deployment complete!"
-  echo "🌐 Access your app at: http://localhost:3000"
-  echo "📊 View logs: docker compose logs -f aurora-social"
-fi
+# Build images
+echo "🔨 Building Docker images..."
+docker compose -f compose.prod.yml build --no-cache
+
+# Start services
+echo "🟢 Starting services..."
+docker compose -f compose.prod.yml up -d
+
+# Wait for database to be ready
+echo "⏳ Waiting for database to be ready..."
+sleep 10
+
+# Run Prisma migrations
+echo "🔄 Running database migrations..."
+docker compose -f compose.prod.yml exec -T aurora-social sh -c "cd /app/server && npx prisma migrate deploy"
+
+# Create admin user if needed
+echo "👤 Checking admin user..."
+docker compose -f compose.prod.yml exec -T aurora-social sh -c "cd /app/server && node dist/scripts/createAdmin.js admin admin123" || echo "ℹ️  Admin user already exists or creation failed"
 
 # Show status
 echo ""
 echo "📋 Container Status:"
-docker compose -f compose${ENV:+.${ENV}}.yml ps
-
-# Health check
-echo ""
-echo "⏳ Waiting for app to be healthy..."
-sleep 5
-docker compose -f compose${ENV:+.${ENV}}.yml ps
+docker compose -f compose.prod.yml ps
 
 echo ""
-echo "✨ Deployment Summary:"
-echo "   - Test Mode: ${VITE_TEST_MODE:-true}"
-echo "   - Node Env: ${NODE_ENV:-production}"
-echo "   - Port: ${PORT:-8080}"
+echo "✅ Deployment Complete!"
 echo ""
-echo "💡 Tip: Check logs with: docker compose -f compose${ENV:+.${ENV}}.yml logs -f"
+echo "🌐 Access your app at: http://$(hostname -I | awk '{print $1}'):${APP_PORT:-3000}"
+echo "📊 API Docs: http://$(hostname -I | awk '{print $1}'):${APP_PORT:-3000}/api-docs"
+echo ""
+echo "📝 Useful commands:"
+echo "   View logs:    docker compose -f compose.prod.yml logs -f"
+echo "   Stop:         docker compose -f compose.prod.yml down"
+echo "   Restart:      docker compose -f compose.prod.yml restart"
+echo ""

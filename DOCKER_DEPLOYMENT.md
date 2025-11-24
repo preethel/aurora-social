@@ -1,236 +1,261 @@
-# Aurora Social - Docker Deployment Guide
+# Aurora Social - Docker Deployment Guide (Updated for TypeScript + Prisma)
 
-## Prerequisites
+## 🚀 Quick Start
 
-- Docker installed and running
-- Docker Compose (v3.8+)
-- `.env` file configured with `IFRAMELY_API_KEY`
+### Prerequisites
+- Docker and Docker Compose installed
+- VM with sufficient resources (2GB RAM minimum)
+- Port 3000 and 5433 available
 
-## Quick Start (Local Development)
-
-### 1. Build and Run with Docker Compose
-
-```bash
-# Build and start containers
-docker compose up -d
-
-# View logs
-docker compose logs -f aurora-social
-
-# Stop containers
-docker compose down
-```
-
-The app will be available at: **http://localhost:3000**
-
-## Azure VM Deployment
-
-### 1. Setup on Azure VM
+### 1. Clone and Setup
 
 ```bash
-# SSH into your Azure VM
-ssh azureuser@<your-vm-ip>
-
-# Navigate to project directory
 cd ~/workingDirectory/aurora-social
 
-# Create .env file with production settings
-cat > .env << EOF
-IFRAMELY_API_KEY=718690c4bc3c1be271bbd3
-VITE_TEST_MODE=false
-PORT=8080
-NODE_ENV=production
-EOF
+# Create .env file
+cp .env.example .env
+nano .env  # Edit with your values
 ```
 
-### 2. Deploy using Docker Compose
+### 2. Configure Environment
 
-```bash
-# Production deployment
-docker-compose -f docker-compose.prod.yml up -d
-
-# Or use the deployment script
-./deploy.sh prod
-```
-
-### 3. Access Your App
-
-```
-http://<your-vm-ip>:3000
-```
-
-## Docker Compose Files
-
-### `docker-compose.yml` (Development)
-
-- Test mode: **enabled** (auto-loads test posts)
-- Health checks: enabled
-- Logs: verbose
-- Port mapping: 3000:8080
-
-### `docker-compose.prod.yml` (Production)
-
-- Test mode: **disabled** by default
-- Optimized logging (10MB max, 3 files)
-- Health checks: enabled
-- Same port mapping
-
-## Environment Variables
-
-Create `.env` file in project root:
+Edit `.env` file:
 
 ```env
-# Required
-IFRAMELY_API_KEY=your_api_key_here
+# Database Configuration
+DB_USER=postgres
+DB_PASSWORD=your_secure_password_here
+DB_NAME=auroraDb
+DB_PORT=5433
+
+# Application
+JWT_SECRET=your_jwt_secret_key_here
+IFRAMELY_API_KEY=your_iframely_key
 
 # Optional
-VITE_TEST_MODE=true          # Load test posts (dev only)
-PORT=8080                     # Server port (default: 8080)
-NODE_ENV=production          # production or development
+APP_PORT=3000
+NODE_ENV=production
 ```
 
-## Container Management
+### 3. Deploy
+
+```bash
+# Make deploy script executable
+chmod +x deploy.sh
+
+# Run deployment
+./deploy.sh
+```
+
+## 📦 What Gets Deployed
+
+The deployment includes:
+
+1. **PostgreSQL Database** (Container)
+   - Port: 5433 (host) → 5432 (container)
+   - Data persisted in Docker volume
+   - Auto-healthcheck enabled
+
+2. **Aurora Social App** (Container)
+   - TypeScript backend (compiled to JavaScript)
+   - React frontend (built and served)
+   - Prisma ORM with PostgreSQL
+   - Port: 3000 (configurable via APP_PORT)
+
+## 🔧 Manual Deployment Steps
+
+If you prefer manual control:
+
+```bash
+# 1. Stop existing containers
+docker compose -f compose.prod.yml down
+
+# 2. Build images
+docker compose -f compose.prod.yml build --no-cache
+
+# 3. Start services
+docker compose -f compose.prod.yml up -d
+
+# 4. Run migrations
+docker compose -f compose.prod.yml exec aurora-social sh -c "cd /app/server && npx prisma migrate deploy"
+
+# 5. Create admin user
+docker compose -f compose.prod.yml exec aurora-social sh -c "cd /app/server && npm run create-admin admin admin123"
+```
+
+## 📊 Monitoring
 
 ### View Logs
 
 ```bash
-# Real-time logs
-docker-compose logs -f aurora-social
+# All services
+docker compose -f compose.prod.yml logs -f
 
-# Last 100 lines
-docker-compose logs --tail=100 aurora-social
+# Just the app
+docker compose -f compose.prod.yml logs -f aurora-social
 
-# With timestamp
-docker-compose logs -f --timestamps aurora-social
+# Just the database
+docker compose -f compose.prod.yml logs -f postgres
 ```
 
-### Stop/Start Containers
+### Check Status
 
 ```bash
-# Stop
-docker-compose stop
+# Container status
+docker compose -f compose.prod.yml ps
 
-# Start (without rebuilding)
-docker-compose start
-
-# Restart
-docker-compose restart
-
-# Remove everything
-docker-compose down
-```
-
-### Check Container Health
-
-```bash
-# See status
-docker-compose ps
-
-# Inspect container
-docker inspect aurora-social-app
-
-# Test health manually
+# Health check
 curl http://localhost:3000
 ```
 
-## Troubleshooting
+### Database Access
 
-### App shows "unhealthy"
+```bash
+# Connect to PostgreSQL
+docker compose -f compose.prod.yml exec postgres psql -U postgres -d auroraDb
+
+# View tables
+\dt
+
+# Exit
+\q
+```
+
+## 🔄 Updates and Maintenance
+
+### Update Application
+
+```bash
+# Pull latest code
+git pull
+
+# Redeploy
+./deploy.sh
+```
+
+### Backup Database
+
+```bash
+# Create backup
+docker compose -f compose.prod.yml exec postgres pg_dump -U postgres auroraDb > backup_$(date +%Y%m%d).sql
+
+# Restore backup
+docker compose -f compose.prod.yml exec -T postgres psql -U postgres auroraDb < backup_20241124.sql
+```
+
+### Reset Everything
+
+```bash
+# Stop and remove all containers and volumes
+docker compose -f compose.prod.yml down -v
+
+# Redeploy from scratch
+./deploy.sh
+```
+
+## 🌐 Accessing the Application
+
+After successful deployment:
+
+- **Frontend**: `http://YOUR_VM_IP:3000`
+- **API Docs**: `http://YOUR_VM_IP:3000/api-docs`
+- **Health Check**: `http://YOUR_VM_IP:3000`
+
+Default admin credentials:
+- Username: `admin`
+- Password: `admin123`
+
+**⚠️ Change the admin password immediately after first login!**
+
+## 🔒 Security Recommendations
+
+1. **Change default passwords** in `.env`
+2. **Use strong JWT_SECRET** (generate with `openssl rand -base64 32`)
+3. **Setup reverse proxy** (nginx) for HTTPS
+4. **Configure firewall** to restrict ports
+5. **Regular backups** of database
+6. **Monitor logs** for suspicious activity
+
+## 🐛 Troubleshooting
+
+### Container won't start
 
 ```bash
 # Check logs
-docker-compose logs aurora-social
+docker compose -f compose.prod.yml logs
 
 # Common issues:
-# 1. Port already in use
-# 2. Missing .env file
-# 3. Build failure
+# - Port already in use
+# - Missing .env file
+# - Insufficient memory
 ```
 
-### Port 3000 already in use
+### Database connection failed
 
 ```bash
-# Change port in docker-compose.yml
-# Change: ports: - "3000:8080"
-# To:     ports: - "3001:8080"
+# Check if postgres is healthy
+docker compose -f compose.prod.yml ps
 
-docker-compose down
-docker-compose up -d
+# Verify DATABASE_URL in logs
+docker compose -f compose.prod.yml logs aurora-social | grep DATABASE_URL
+
+# Restart database
+docker compose -f compose.prod.yml restart postgres
 ```
 
-### Clear everything and rebuild
+### Migration errors
 
 ```bash
-docker-compose down -v
-docker system prune -a
-docker-compose up -d --build
+# Reset migrations (⚠️ will lose data)
+docker compose -f compose.prod.yml exec aurora-social sh -c "cd /app/server && npx prisma migrate reset --force"
+
+# Or manually run migrations
+docker compose -f compose.prod.yml exec aurora-social sh -c "cd /app/server && npx prisma migrate deploy"
 ```
 
-## Production Deployment Checklist
+### Port conflicts
 
-- [ ] Set `VITE_TEST_MODE=false` in `.env`
-- [ ] Verify `IFRAMELY_API_KEY` is correct
-- [ ] Use `docker-compose.prod.yml` for deployment
-- [ ] Configure firewall to allow port 3000
-- [ ] Setup reverse proxy (nginx/Apache) for HTTPS
-- [ ] Configure backup/restore strategy
-- [ ] Monitor logs and health checks
-
-## Monitoring
-
-### Real-time Monitoring
+If port 3000 or 5433 is already in use:
 
 ```bash
-# Watch container stats
-docker stats aurora-social-app
+# Edit .env
+APP_PORT=3001
+DB_PORT=5434
 
-# Follow logs
-docker-compose logs -f --tail=50 aurora-social
+# Redeploy
+./deploy.sh
 ```
 
-### Health Check URL
+## 📈 Performance Tuning
 
-```bash
-curl -I http://localhost:3000
-```
+### Increase PostgreSQL Memory
 
-Expected response:
-
-```
-HTTP/1.1 200 OK
-```
-
-## Advanced Configuration
-
-### Custom Network
-
-The setup uses a bridge network named `aurora-network`. To connect other services:
+Edit `compose.prod.yml` and add under postgres service:
 
 ```yaml
+command: postgres -c shared_buffers=256MB -c max_connections=200
+```
+
+### Enable Gzip Compression
+
+The app already serves compressed assets. For additional compression, use nginx reverse proxy.
+
+## 🔗 Integration with Existing Services
+
+If you have other Docker services running:
+
+```yaml
+# In compose.prod.yml, use external network
 networks:
-  - aurora-network
+  aurora-network:
+    external: true
+    name: your_existing_network
 ```
 
-### Volume Persistence
-
-Current setup has read-only volume for dist. For persistent data:
-
-```yaml
-volumes:
-  - aurora-data:/app/data
-```
-
-## API Endpoints
-
-- **Frontend**: `http://localhost:3000`
-- **API**: `http://localhost:8080/api/iframely`
-- **Health**: `http://localhost:8080`
-
-## Support
+## 📞 Support
 
 For issues:
-
-1. Check logs: `docker-compose logs aurora-social`
+1. Check logs: `docker compose -f compose.prod.yml logs`
 2. Verify `.env` configuration
-3. Ensure all ports are available
-4. Rebuild if needed: `docker-compose up -d --build`
+3. Ensure ports are available
+4. Check Docker resources: `docker system df`
