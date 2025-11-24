@@ -26,18 +26,18 @@ export interface SocialPost {
   remarks?: string; // Remarks or Notes
   content: string; // Embed code or URL
   date: string; // ISO Date string YYYY-MM-DD
-  createdAt: number;
+  createdAt: number | string; // BigInt serialized as string from API
   // New fields for Screenshot support
   mediaType?: 'embed' | 'screenshot';
   screenshot?: string; // Base64 string of the image
   redirectLink?: string; // URL to the post
-  
+
   // New Classification Fields
   category?: string;
   postType?: PostType;
 }
 
-export type ViewState = 'dashboard' | 'calendar' | 'add-post' | 'recent-posts' | 'report' | 'accounts-management';
+export type ViewState = 'dashboard' | 'calendar' | 'add-post' | 'recent-posts' | 'report' | 'accounts-management' | 'user-management';
 
 export interface DayMetrics {
   date: string;

@@ -7,6 +7,7 @@ import { Login } from "./components/Login";
 import { RecentPosts } from "./components/RecentPosts";
 import { ReportView } from "./components/ReportView";
 import { Sidebar } from "./components/Sidebar";
+import { UserManagement } from "./components/UserManagement";
 import { getCurrentUser, logout } from "./services/authService";
 import { createPost, deletePost, getPosts, updatePost } from "./services/postService";
 import { SocialPost, ViewState } from "./types";
@@ -143,6 +144,8 @@ export default function App() {
           {currentView === "accounts-management" && (
             <AccountsManagement posts={posts} />
           )}
+
+          {currentView === "user-management" && <UserManagement />}
 
           {currentView === "add-post" && (
             <AddPostForm

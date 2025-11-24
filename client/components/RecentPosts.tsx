@@ -1,9 +1,9 @@
+import { Calendar, Clock, Pencil, Trash2, User } from 'lucide-react';
 import React, { useState } from 'react';
-import { SocialPost } from '../types';
 import { PLATFORM_COLORS } from '../constants';
+import { SocialPost } from '../types';
 import { PostModal } from './PostModal';
 import { SafeEmbed } from './SafeEmbed';
-import { Calendar, Clock, User, Trash2, Pencil } from 'lucide-react';
 
 interface RecentPostsProps {
   posts: SocialPost[];
@@ -14,11 +14,16 @@ interface RecentPostsProps {
 export const RecentPosts: React.FC<RecentPostsProps> = ({ posts, onDelete, onEdit }) => {
   const [selectedPost, setSelectedPost] = useState<SocialPost | null>(null);
 
-  // Sort posts by createdAt (descending)
-  const sortedPosts = [...posts].sort((a, b) => b.createdAt - a.createdAt);
+  // Sort posts by createdAt (descending) - handle both string and number
+  const sortedPosts = [...posts].sort((a, b) => {
+    const aTime = typeof a.createdAt === 'string' ? parseInt(a.createdAt) : a.createdAt;
+    const bTime = typeof b.createdAt === 'string' ? parseInt(b.createdAt) : b.createdAt;
+    return bTime - aTime;
+  });
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString(undefined, {
+  const formatDate = (timestamp: number | string) => {
+    const time = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+    return new Date(time).toLocaleString(undefined, {
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
   };
@@ -87,7 +92,7 @@ export const RecentPosts: React.FC<RecentPostsProps> = ({ posts, onDelete, onEdi
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span className="flex items-center gap-1.5">
                       <Calendar size={12} className="text-gray-400" />
-                      {post.date}
+                      {post.date || 'Not set'}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <User size={12} className="text-gray-400" />

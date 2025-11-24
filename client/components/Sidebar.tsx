@@ -1,6 +1,7 @@
 
+import { BarChart3, CalendarDays, Clock, LayoutDashboard, PlusCircle, UserCog, Users, Zap } from 'lucide-react';
 import React from 'react';
-import { LayoutDashboard, CalendarDays, PlusCircle, Zap, Clock, BarChart3, Users } from 'lucide-react';
+import { getCurrentUser } from '../services/authService';
 import { ViewState } from '../types';
 
 interface SidebarProps {
@@ -9,6 +10,9 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) => {
+  const currentUser = getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
+
   const navItemClass = (view: ViewState) => `
     w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
     ${currentView === view 
@@ -46,6 +50,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) =
           <Users size={20} />
           Accounts Mgmt
         </button>
+        {isAdmin && (
+          <button onClick={() => onChangeView('user-management')} className={navItemClass('user-management')}>
+            <UserCog size={20} />
+            User Management
+          </button>
+        )}
       </nav>
 
       <div className="p-4">

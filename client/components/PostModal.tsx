@@ -1,8 +1,8 @@
 
+import { Calendar, DollarSign, ExternalLink, FileText, Image as ImageIcon, Layers, List, Pencil, Tag, Trash2, User, X } from 'lucide-react';
 import React from 'react';
-import { X, Calendar, User, DollarSign, Tag, ExternalLink, Image as ImageIcon, FileText, Pencil, Trash2, List, Layers } from 'lucide-react';
-import { SocialPost } from '../types';
 import { PLATFORM_COLORS } from '../constants';
+import { SocialPost } from '../types';
 import { SafeEmbed } from './SafeEmbed';
 
 interface PostModalProps {
@@ -92,7 +92,7 @@ export const PostModal: React.FC<PostModalProps> = ({ post, onClose, onDelete, o
               <div className="text-xs text-gray-400 uppercase font-semibold mb-1 flex items-center gap-1">
                 <Calendar size={12} /> Date
               </div>
-              <div className="font-medium text-gray-800">{post.date}</div>
+              <div className="font-medium text-gray-800">{post.date || 'Not set'}</div>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="text-xs text-gray-400 uppercase font-semibold mb-1 flex items-center gap-1">
@@ -182,7 +182,7 @@ export const PostModal: React.FC<PostModalProps> = ({ post, onClose, onDelete, o
         
         {/* Footer */}
         <div className="p-4 border-t bg-gray-50 text-right text-xs text-gray-400">
-          ID: {post.id} • Created: {new Date(post.createdAt).toLocaleString()}
+          ID: {post.id} • Created: {new Date(typeof post.createdAt === 'string' ? parseInt(post.createdAt) : post.createdAt).toLocaleString()}
         </div>
       </div>
     </div>

@@ -1,12 +1,22 @@
 
+import { Activity, Award, Calendar, Download, TrendingUp, Users } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { SocialPost, Platform } from '../types';
-import { PLATFORM_COLORS } from '../constants';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, AreaChart, Area, Legend
+import {
+    Area,
+    AreaChart,
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Legend,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis, YAxis
 } from 'recharts';
-import { Download, Calendar, TrendingUp, Users, Award, Activity } from 'lucide-react';
+import { PLATFORM_COLORS } from '../constants';
+import { Platform, SocialPost } from '../types';
 
 interface ReportViewProps {
   posts: SocialPost[];
@@ -27,7 +37,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ posts }) => {
     const daysToSubtract = timeRange === '7days' ? 7 : timeRange === '30days' ? 30 : 90;
     past.setDate(now.getDate() - daysToSubtract);
     
-    return posts.filter(p => new Date(p.date) >= past);
+    return posts.filter(p => p.date && new Date(p.date) >= past);
   }, [posts, timeRange]);
 
   const analytics = useMemo(() => {
@@ -43,7 +53,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ posts }) => {
       byBrand[post.brandName] = (byBrand[post.brandName] || 0) + 1;
       byPlatform[post.platform] = (byPlatform[post.platform] || 0) + 1;
       byCreator[post.creatorName] = (byCreator[post.creatorName] || 0) + 1;
-      byDate[post.date] = (byDate[post.date] || 0) + 1;
+      if (post.date) {
+        byDate[post.date] = (byDate[post.date] || 0) + 1;
+      }
     });
 
     // Top Performers
@@ -66,6 +78,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ posts }) => {
 
     // Sort timeline by date
     const timelineData = Object.entries(byDate)
+      .filter(([date]) => date && date !== 'undefined')
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
