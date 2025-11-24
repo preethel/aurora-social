@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-  # Aurora Social App
   aurora-social:
     build:
       context: .
@@ -12,19 +11,26 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8080
+
+      # Existing Postgres (wealthgrow-postgres)
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - DB_HOST=wealthgrow-postgres
+      - DB_HOST=127.0.0.1
       - DB_NAME=${DB_NAME:-auroraDb}
-      - DB_PORT=5432
-      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@wealthgrow-postgres:5432/${DB_NAME:-auroraDb}?schema=public
+      - DB_PORT=5433
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@127.0.0.1:5433/${DB_NAME:-auroraDb}?schema=public
+
       - JWT_SECRET=${JWT_SECRET}
       - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
-    depends_on:
-      - postgres
+
+    # ❌ REMOVE depends_on (because postgres service does NOT exist)
+    # depends_on:
+    #   - postgres
+
     networks:
       - app-network
     restart: unless-stopped
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
       interval: 30s
@@ -40,6 +46,3 @@ services:
 networks:
   app-network:
     external: true
-
-# Note: Using existing wealthgrow-postgres container
-# No need to create separate postgres service

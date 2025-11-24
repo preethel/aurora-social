@@ -42,7 +42,7 @@ DB_NAME=auroraDb
 
 # Application
 JWT_SECRET=$(openssl rand -base64 32)
-IFRAMELY_API_KEY=your_iframely_key
+IFRAMELY_API_KEY=718690c4bc3c1be271bbd3
 
 # Optional
 APP_PORT=3000
