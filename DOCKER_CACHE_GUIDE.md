@@ -7,12 +7,14 @@ The Dockerfile now uses BuildKit cache mounts for npm installations. This signif
 ## Cache Benefits
 
 ### Before (Without Cache):
+
 ```bash
 # Every build downloads all packages again
 npm ci  # Downloads ~500MB of node_modules every time
 ```
 
 ### After (With Cache):
+
 ```bash
 # First build: Downloads packages (5-10 minutes)
 # Subsequent builds: Uses cache (30 seconds - 2 minutes)
@@ -20,11 +22,11 @@ npm ci  # Downloads ~500MB of node_modules every time
 
 ## Performance Comparison
 
-| Build Type | Without Cache | With Cache | Time Saved |
-|------------|---------------|------------|------------|
-| First build | 10-15 min | 10-15 min | 0% |
-| Rebuild (no package.json change) | 10-15 min | 30s-2min | **80-90%** |
-| Rebuild (package.json changed) | 10-15 min | 3-5 min | **50-70%** |
+| Build Type                       | Without Cache | With Cache | Time Saved |
+| -------------------------------- | ------------- | ---------- | ---------- |
+| First build                      | 10-15 min     | 10-15 min  | 0%         |
+| Rebuild (no package.json change) | 10-15 min     | 30s-2min   | **80-90%** |
+| Rebuild (package.json changed)   | 10-15 min     | 3-5 min    | **50-70%** |
 
 ## How It Works
 
@@ -36,6 +38,7 @@ RUN --mount=type=cache,target=/root/.npm \
 ```
 
 **What this does:**
+
 - Caches npm's download folder at `/root/.npm`
 - Reuses downloaded packages across builds
 - Only downloads new/changed packages
@@ -44,22 +47,25 @@ RUN --mount=type=cache,target=/root/.npm \
 ### Three Cache Locations
 
 1. **Client build** - `/root/.npm` (client dependencies)
-2. **Server build** - `/root/.npm` (server dev dependencies)  
+2. **Server build** - `/root/.npm` (server dev dependencies)
 3. **Production** - `/root/.npm` (production dependencies only)
 
 ## Enable BuildKit (Required)
 
 ### For Single Build:
+
 ```bash
 DOCKER_BUILDKIT=1 docker build -t aurora-social .
 ```
 
 ### For Docker Compose:
+
 ```bash
 DOCKER_BUILDKIT=1 docker compose -f compose.prod.yml build
 ```
 
 ### Permanently Enable (Recommended):
+
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
 export DOCKER_BUILDKIT=1
@@ -72,6 +78,7 @@ sudo systemctl restart docker
 ## Usage on Azure VM
 
 ### First Build (With Cache):
+
 ```bash
 # Enable BuildKit
 export DOCKER_BUILDKIT=1
@@ -84,12 +91,14 @@ docker build -t aurora-social .
 ```
 
 ### Subsequent Builds (Super Fast):
+
 ```bash
 # Same command, but much faster due to cache
 docker compose -f compose.prod.yml build
 ```
 
 ### View Cache Usage:
+
 ```bash
 # Check Docker cache size
 docker system df
@@ -101,11 +110,13 @@ docker builder prune
 ## Cache Invalidation
 
 Cache is automatically invalidated when:
+
 - ✅ `package.json` changes
 - ✅ `package-lock.json` changes
 - ❌ Source code changes (doesn't affect cache)
 
 This means:
+
 - **Code changes:** Fast rebuild (uses cache)
 - **Dependency changes:** Medium rebuild (downloads only new packages)
 - **No changes:** Fastest rebuild (everything from cache)
@@ -113,16 +124,19 @@ This means:
 ## Manual Cache Management
 
 ### View Cache:
+
 ```bash
 docker buildx du
 ```
 
 ### Clear Specific Cache:
+
 ```bash
 docker builder prune --filter type=exec.cachemount
 ```
 
 ### Clear All Build Cache:
+
 ```bash
 docker builder prune -a
 ```
@@ -130,6 +144,7 @@ docker builder prune -a
 ## Best Practices
 
 ### 1. Always Use BuildKit
+
 ```bash
 # Add to your shell profile
 echo 'export DOCKER_BUILDKIT=1' >> ~/.bashrc
@@ -137,13 +152,16 @@ source ~/.bashrc
 ```
 
 ### 2. Use Compose for Consistency
+
 ```bash
 # Uses cache automatically
 docker compose -f compose.prod.yml build
 ```
 
 ### 3. Layer Optimization
+
 Current Dockerfile is already optimized:
+
 ```dockerfile
 # 1. Copy package files first (rarely changes)
 COPY package*.json ./
@@ -190,6 +208,7 @@ time docker compose -f compose.prod.yml build
 ```
 
 Expected output:
+
 - First build: ~10-15 minutes
 - Second build: ~30 seconds - 2 minutes
 
@@ -198,6 +217,7 @@ Expected output:
 ### Cache Not Working?
 
 **Check if BuildKit is enabled:**
+
 ```bash
 docker version | grep BuildKit
 # or
@@ -205,6 +225,7 @@ echo $DOCKER_BUILDKIT
 ```
 
 **Force enable:**
+
 ```bash
 DOCKER_BUILDKIT=1 docker compose -f compose.prod.yml build
 ```
@@ -250,6 +271,6 @@ For GitHub Actions or Azure Pipelines:
 ✅ **Automatic:** No manual intervention needed  
 ✅ **Smart:** Only downloads changed packages  
 ✅ **Persistent:** Cache survives between builds  
-✅ **Safe:** Doesn't affect final image  
+✅ **Safe:** Doesn't affect final image
 
 **Just enable BuildKit and enjoy faster builds!** 🚀
