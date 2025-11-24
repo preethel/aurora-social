@@ -1,27 +1,6 @@
 version: "3.8"
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: aurora-postgres
-    environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-auroraDb}
-    ports:
-      - "${DB_PORT:-5433}:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - aurora-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Aurora Social App
   aurora-social:
     build:
@@ -35,17 +14,16 @@ services:
       - PORT=8080
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - DB_HOST=postgres
+      - DB_HOST=wealthgrow-postgres
       - DB_NAME=${DB_NAME:-auroraDb}
       - DB_PORT=5432
-      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-auroraDb}?schema=public
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@wealthgrow-postgres:5432/${DB_NAME:-auroraDb}?schema=public
       - JWT_SECRET=${JWT_SECRET}
       - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     networks:
-      - aurora-network
+      - app-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
@@ -59,10 +37,9 @@ services:
         max-size: "10m"
         max-file: "3"
 
-volumes:
-  postgres-data:
-    driver: local
-
 networks:
-  aurora-network:
-    driver: bridge
+  app-network:
+    external: true
+
+# Note: Using existing wealthgrow-postgres container
+# No need to create separate postgres service

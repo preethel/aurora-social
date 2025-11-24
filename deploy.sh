@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Aurora Social - Production Deployment Script
-# For VM deployment with Docker
+# For VM deployment with Docker (using existing PostgreSQL)
 
 set -e
 
@@ -12,9 +12,9 @@ echo "========================================"
 if [ ! -f .env ]; then
     echo "❌ Error: .env file not found!"
     echo "📝 Please create .env file with required variables:"
-    echo "   - DB_USER"
-    echo "   - DB_PASSWORD"
-    echo "   - DB_NAME"
+    echo "   - DB_USER (default: postgres)"
+    echo "   - DB_PASSWORD (default: postgres)"
+    echo "   - DB_NAME (default: auroraDb)"
     echo "   - JWT_SECRET"
     echo "   - IFRAMELY_API_KEY"
     exit 1
@@ -24,8 +24,27 @@ fi
 echo "📄 Loading environment variables..."
 export $(cat .env | grep -v '^#' | xargs)
 
-# Stop existing containers
-echo "⛔ Stopping existing containers..."
+# Set defaults
+DB_USER=${DB_USER:-postgres}
+DB_PASSWORD=${DB_PASSWORD:-postgres}
+DB_NAME=${DB_NAME:-auroraDb}
+
+# Check if app-network exists
+if ! docker network inspect app-network >/dev/null 2>&1; then
+    echo "❌ Error: app-network not found!"
+    echo "Please ensure your existing docker-compose services are running."
+    exit 1
+fi
+
+# Create database if it doesn't exist
+echo "🗄️  Checking database..."
+docker exec wealthgrow-postgres psql -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || \
+    docker exec wealthgrow-postgres psql -U $DB_USER -c "CREATE DATABASE \"$DB_NAME\"" && \
+    echo "✅ Database $DB_NAME created" || \
+    echo "ℹ️  Database $DB_NAME already exists"
+
+# Stop existing Aurora Social container
+echo "⛔ Stopping existing Aurora Social container..."
 docker compose -f compose.prod.yml down || true
 
 # Pull latest code (if using git)
@@ -39,11 +58,11 @@ echo "🔨 Building Docker images..."
 docker compose -f compose.prod.yml build --no-cache
 
 # Start services
-echo "🟢 Starting services..."
+echo "🟢 Starting Aurora Social..."
 docker compose -f compose.prod.yml up -d
 
-# Wait for database to be ready
-echo "⏳ Waiting for database to be ready..."
+# Wait for app to be ready
+echo "⏳ Waiting for application to be ready..."
 sleep 10
 
 # Run Prisma migrations
@@ -51,8 +70,8 @@ echo "🔄 Running database migrations..."
 docker compose -f compose.prod.yml exec -T aurora-social sh -c "cd /app/server && npx prisma migrate deploy"
 
 # Create admin user if needed
-echo "👤 Checking admin user..."
-docker compose -f compose.prod.yml exec -T aurora-social sh -c "cd /app/server && node dist/scripts/createAdmin.js admin admin123" || echo "ℹ️  Admin user already exists or creation failed"
+echo "👤 Creating admin user..."
+docker compose -f compose.prod.yml exec -T aurora-social sh -c "cd /app/server && node dist/scripts/createAdmin.js admin admin123" || echo "ℹ️  Admin user already exists"
 
 # Show status
 echo ""
@@ -69,4 +88,6 @@ echo "📝 Useful commands:"
 echo "   View logs:    docker compose -f compose.prod.yml logs -f"
 echo "   Stop:         docker compose -f compose.prod.yml down"
 echo "   Restart:      docker compose -f compose.prod.yml restart"
+echo ""
+echo "💡 Note: Using existing PostgreSQL container (wealthgrow-postgres)"
 echo ""
