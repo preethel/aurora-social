@@ -13,10 +13,11 @@ services:
       - PORT=8080
 
       # Existing Postgres (wealthgrow-postgres)
-      - DB_USER=${DB_USER:-postgres}
       - DB_HOST=wealthgrow-postgres
       - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-auroraDb}
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=auroraDb
       - DATABASE_URL=postgresql://postgres:postgres@wealthgrow-postgres:5432/auroraDb?schema=public
 
       - JWT_SECRET=${JWT_SECRET}
