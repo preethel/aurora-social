@@ -9,6 +9,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8080
+      - JWT_SECRET=self_signed_jwt_secret_key_here
+      - IFRAMELY_API_KEY=718690c4bc3c1be271bbd3
 
       # Existing Postgres (wealthgrow-postgres)
       - DB_HOST=wealthgrow-postgres
