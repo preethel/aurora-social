@@ -4,15 +4,15 @@ import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Load environment variables from .env file
-dotenv.config();
-
 // Iframely proxy: Uses server-side secret (IFRAMELY_API_KEY) to avoid exposing it to clients.
 // Falls back to VITE_IFRAMELY_API_KEY only if mistakenly set (not recommended for production).
 // This endpoint prevents direct client usage of the key and mitigates abuse.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables from .env file in the root directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 
@@ -109,12 +109,12 @@ app.get('/api/youtube', (req, res) => {
   res.json({ html, type: 'video', provider_name: 'YouTube' });
 });
 
-// Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, 'dist')));
+// Serve static files from the client dist directory
+app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
 
 // Handle client-side routing - serve index.html for all routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
 const port = process.env.PORT || 8080;

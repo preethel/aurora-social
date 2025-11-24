@@ -8,18 +8,52 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1SKAfrJLZLP9ZcZMHN3yvDZLWcE00nLma
 
+## Project Structure
+
+The project is organized into separate server and client directories:
+
+```
+aurora-social/
+├── server/          # Backend Express server
+│   ├── server.js    # Main server file with API endpoints
+│   └── package.json # Server dependencies
+├── client/          # Frontend React application
+│   ├── components/  # React components
+│   ├── App.tsx      # Main React component
+│   ├── index.tsx    # Entry point
+│   └── package.json # Client dependencies
+├── .env             # Environment variables
+└── package.json     # Root package file for scripts
+```
+
 ## Run Locally
 
 **Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
+   ```bash
+   npm run install:all
+   ```
+   
 2. Set up environment variables:
    - Copy `.env.example` to `.env`
    - Set `VITE_TEST_MODE=true` to load sample posts
    - Set `IFRAMELY_API_KEY` to your Iframely API key
+
 3. Run the app:
-   `npm run dev`
+   - Development (client only):
+     ```bash
+     npm run dev:client
+     ```
+   - Development (server only):
+     ```bash
+     npm run dev:server
+     ```
+   - Production:
+     ```bash
+     npm run build
+     npm start
+     ```
 
 ## Deploy with Docker
 
