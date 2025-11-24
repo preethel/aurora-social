@@ -57,6 +57,8 @@ aurora-social/
 
 ## Deploy with Docker
 
+**Note:** Docker builds may take several minutes due to npm package installations in Alpine Linux.
+
 ### Local Docker Deployment
 
 ```bash

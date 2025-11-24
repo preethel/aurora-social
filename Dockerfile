@@ -8,8 +8,13 @@ COPY package*.json ./
 COPY client/package*.json ./client/
 COPY server/package*.json ./server/
 
-# Install dependencies
-RUN npm install && cd client && npm ci && cd ../server && npm ci
+# Install dependencies - using npm install for better Alpine Linux compatibility
+RUN npm install && \
+    cd client && \
+    rm -rf package-lock.json && \
+    npm install && \
+    cd ../server && \
+    npm install
 
 # Copy source code
 COPY client ./client
@@ -32,7 +37,7 @@ WORKDIR /app
 COPY server/package*.json ./server/
 
 # Install production dependencies only
-RUN cd server && npm ci --only=production
+RUN cd server && npm install --omit=dev
 
 # Copy built client application from builder
 COPY --from=builder /app/client/dist ./client/dist
