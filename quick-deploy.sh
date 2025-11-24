@@ -2,6 +2,9 @@
 # Aurora Social - Quick Deploy for Existing Postgres
 # This script deploys aurora-social using your existing wealthgrow-postgres
 
+# Enable Docker BuildKit for faster builds with caching
+export DOCKER_BUILDKIT=1
+
 echo "🚀 Aurora Social - Quick Deploy"
 echo "================================"
 echo ""
@@ -29,6 +32,7 @@ fi
 # Step 3: Build and start
 echo ""
 echo "🔨 Building and starting Aurora Social..."
+echo "💡 Using Docker BuildKit for faster builds with cache"
 docker compose -f compose.prod.yml up -d --build
 
 # Wait for container to start
@@ -39,6 +43,18 @@ sleep 10
 echo ""
 if docker ps | grep -q aurora-social-app; then
   echo "✅ Container is running"
+  
+  # Verify client files exist
+  echo ""
+  echo "🔍 Verifying client files..."
+  if docker exec aurora-social-app test -f /app/server/client/dist/index.html; then
+    echo "✅ Client files found"
+  else
+    echo "❌ Client files not found. Checking directory structure..."
+    docker exec aurora-social-app ls -la /app/server/client/ || echo "client directory not found"
+    echo ""
+    echo "This might indicate a build issue. Check build logs above."
+  fi
 else
   echo "❌ Container failed to start. Checking logs..."
   docker logs aurora-social-app 2>&1 | tail -20

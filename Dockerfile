@@ -8,8 +8,9 @@ WORKDIR /app/client
 # Copy client package files
 COPY client/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies with cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy client source
 COPY client/ ./
@@ -26,8 +27,9 @@ WORKDIR /app/server
 COPY server/package*.json ./
 COPY server/tsconfig.json ./
 
-# Install ALL dependencies (including dev for TypeScript compilation)
-RUN npm ci
+# Install ALL dependencies (including dev for TypeScript compilation) with cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy server source and Prisma schema
 COPY server/ ./
@@ -49,9 +51,10 @@ RUN apk add --no-cache curl
 # Copy server package files
 COPY server/package*.json ./server/
 
-# Install production dependencies only
+# Install production dependencies only with cache mount
 WORKDIR /app/server
-RUN npm ci --omit=dev
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev
 
 # Copy Prisma schema and migrations
 COPY server/prisma ./prisma/
@@ -62,8 +65,8 @@ RUN npx prisma generate
 # Copy built server from builder
 COPY --from=server-builder /app/server/dist ./dist
 
-# Copy built client from client-builder
-COPY --from=client-builder /app/client/dist ../client/dist
+# Copy built client from client-builder to the correct location
+COPY --from=client-builder /app/client/dist ./client/dist
 
 # Copy environment file template
 COPY .env.example ../.env.example
