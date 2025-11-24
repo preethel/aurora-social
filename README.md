@@ -34,8 +34,8 @@ aurora-social/
    ```bash
    npm run install:all
    ```
-   
 2. Set up environment variables:
+
    - Copy `.env.example` to `.env`
    - Set `VITE_TEST_MODE=true` to load sample posts
    - Set `IFRAMELY_API_KEY` to your Iframely API key
@@ -58,6 +58,33 @@ aurora-social/
 ## Deploy with Docker
 
 **Note:** Docker builds may take several minutes due to npm package installations in Alpine Linux.
+
+### Database Connection Issues?
+
+**Using existing PostgreSQL container?** See [DEPLOYMENT_QUICK_START.md](./DEPLOYMENT_QUICK_START.md) for step-by-step guide.
+
+**Quick deploy with existing postgres:**
+
+```bash
+chmod +x quick-deploy.sh
+./quick-deploy.sh
+```
+
+If you encounter database connection errors, use the automated fix script:
+
+```bash
+chmod +x fix-db-connection.sh
+./fix-db-connection.sh
+```
+
+This will automatically:
+
+- Detect your PostgreSQL network
+- Update Docker Compose configuration
+- Connect containers to the same network
+- Run database migrations
+
+For detailed troubleshooting, see [DB_TROUBLESHOOTING.md](./DB_TROUBLESHOOTING.md)
 
 ### Local Docker Deployment
 

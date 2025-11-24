@@ -23,12 +23,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
 
-    # ❌ REMOVE depends_on (because postgres service does NOT exist)
-    # depends_on:
-    #   - postgres
-
     networks:
-      - app-network
+      - tradingapp_app-network
     restart: unless-stopped
 
     healthcheck:
@@ -44,5 +40,5 @@ services:
         max-file: "3"
 
 networks:
-  app-network:
+  tradingapp_app-network:
     external: true
