@@ -26,8 +26,51 @@ dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 const app = express();
 
-// Middleware
-app.use(helmet());
+// Middleware - Configure Helmet with relaxed CSP for development
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          "https://connect.facebook.net",
+          "https://cdn.iframe.ly",
+          "https://www.instagram.com",
+          "https://platform.twitter.com",
+          "https://www.tiktok.com",
+          "https://assets.pinterest.com",
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdn.iframe.ly",
+          "https://fonts.googleapis.com",
+        ],
+        imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+        connectSrc: ["'self'", "https://iframe.ly", "https://cdn.iframe.ly"],
+        frameSrc: [
+          "'self'",
+          "https://www.youtube.com",
+          "https://www.youtube-nocookie.com",
+          "https://www.facebook.com",
+          "https://www.instagram.com",
+          "https://platform.twitter.com",
+          "https://www.tiktok.com",
+          "https://assets.pinterest.com",
+          "https://iframe.ly",
+        ],
+        mediaSrc: ["'self'", "https:", "http:", "data:", "blob:"],
+        fontSrc: ["'self'", "data:", "https:", "https://fonts.gstatic.com"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
@@ -151,12 +194,10 @@ app.get(
       setCache(cacheKey, shaped);
       res.json(shaped);
     } catch (e: any) {
-      res
-        .status(502)
-        .json({
-          error: "Proxy fetch failed",
-          detail: (e && e.message) || "Unknown error",
-        });
+      res.status(502).json({
+        error: "Proxy fetch failed",
+        detail: (e && e.message) || "Unknown error",
+      });
     }
   }
 );
