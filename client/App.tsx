@@ -9,7 +9,12 @@ import { ReportView } from "./components/ReportView";
 import { Sidebar } from "./components/Sidebar";
 import { UserManagement } from "./components/UserManagement";
 import { getCurrentUser, logout } from "./services/authService";
-import { createPost, deletePost, getPosts, updatePost } from "./services/postService";
+import {
+  createPost,
+  deletePost,
+  getPosts,
+  updatePost,
+} from "./services/postService";
 import { SocialPost, ViewState } from "./types";
 
 export default function App() {
@@ -18,6 +23,7 @@ export default function App() {
   const [editingPost, setEditingPost] = useState<SocialPost | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const user = getCurrentUser();
@@ -64,6 +70,7 @@ export default function App() {
         const created = await createPost(post);
         setPosts((prev) => [created, ...prev]);
       }
+      setRefreshTrigger((prev) => prev + 1); // Trigger refresh for paginated component
       setCurrentView("recent-posts");
     } catch (error) {
       console.error("Failed to save post", error);
@@ -80,6 +87,7 @@ export default function App() {
       try {
         await deletePost(id);
         setPosts((prev) => prev.filter((p) => p.id !== id));
+        setRefreshTrigger((prev) => prev + 1); // Trigger refresh for paginated component
       } catch (error) {
         console.error("Failed to delete post", error);
         alert("Failed to delete post");
@@ -107,8 +115,8 @@ export default function App() {
       <Sidebar
         currentView={currentView}
         onChangeView={(view) => {
-          if (view === 'accounts-management') {
-             // Handle logout if needed or just view
+          if (view === "accounts-management") {
+            // Handle logout if needed or just view
           }
           setCurrentView(view);
           setEditingPost(null);
@@ -116,7 +124,12 @@ export default function App() {
       />
       {/* Add a logout button or link somewhere, maybe in Sidebar or Header. For now, temporary logout button */}
       <div className="fixed top-4 right-4 z-50">
-        <button onClick={handleLogout} className="bg-red-500 text-white px-3 py-1 rounded text-sm">Logout</button>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+        >
+          Logout
+        </button>
       </div>
 
       <main className="flex-1 ml-64 p-8 overflow-y-auto h-screen">
@@ -133,13 +146,13 @@ export default function App() {
 
           {currentView === "recent-posts" && (
             <RecentPosts
-              posts={posts}
               onDelete={handleDeletePost}
               onEdit={handleEditPost}
+              refreshTrigger={refreshTrigger}
             />
           )}
 
-          {currentView === "report" && <ReportView posts={posts} />}
+          {currentView === "report" && <ReportView />}
 
           {currentView === "accounts-management" && (
             <AccountsManagement posts={posts} />

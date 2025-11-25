@@ -1,48 +1,25 @@
-# Default Docker Compose Configuration (uses compose.local.yml)
-#
-# For LOCAL DEVELOPMENT (with Azurite):
-#   docker compose up -d
-#   OR
-#   docker compose -f compose.local.yml up -d
-#
-# For PRODUCTION (with Azure Storage):
-#   docker compose -f compose.prod.yml --env-file .env.production up -d
-#
-# See DEPLOYMENT.md for detailed instructions
+# Production Docker Compose Configuration (Azure)
+# Usage: docker compose -f compose.prod.yml up -d
+# Note: Azurite is NOT included - uses real Azure Storage
 
 services:
-  # Azurite - Azure Storage Emulator for local development
-  azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
-    container_name: aurora-azurite
-    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0"
-    ports:
-      - "10000:10000" # Blob service
-      - "10001:10001" # Queue service
-      - "10002:10002" # Table service
-    volumes:
-      - azurite_data:/data
-    restart: always
-    networks:
-      - aurora-network
-
   # Aurora Postgres Database
   aurora-postgres:
     image: postgres:16
     container_name: aurora-postgres
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=AuroraSocialDb
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-AuroraSocialDb}
     ports:
-      - "5434:5432"
+      - "${DB_PORT:-5435}:5432"
     volumes:
       - aurora_postgres_data:/var/lib/postgresql/data
     restart: always
     networks:
       - aurora-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,14 +32,16 @@ services:
     container_name: aurora-app
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_URL=postgresql://postgres:postgres@aurora-postgres:5432/AuroraSocialDb?schema=public
-      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - PORT=${PORT:-3000}
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@aurora-postgres:5432/${DB_NAME:-AuroraSocialDb}?schema=public
+      - JWT_SECRET=${JWT_SECRET}
       - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
+      # Production Azure Storage Connection String
       - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
       - AZURE_STORAGE_CONTAINER_NAME=${AZURE_STORAGE_CONTAINER_NAME:-screenshots}
+      # Migration will run automatically via Dockerfile CMD
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     depends_on:
       aurora-postgres:
         condition: service_healthy
@@ -89,5 +68,4 @@ networks:
     driver: bridge
 
 volumes:
-  azurite_data:
   aurora_postgres_data:

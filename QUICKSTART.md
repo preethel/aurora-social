@@ -5,7 +5,8 @@
 ```bash
 # 0. Environment setup (first time only)
 cp .env.example .env
-# Edit .env: Update JWT_SECRET and IFRAMELY_API_KEY
+# Edit .env: Update JWT_SECRET, IFRAMELY_API_KEY
+# Note: Azure Storage (Azurite) is pre-configured for local development
 
 # 1. Build করুন
 docker compose build
@@ -38,6 +39,16 @@ docker exec -it aurora-app npm run create-admin
 - **Own Postgres**: `aurora-postgres` container
 - **Database**: `AuroraSocialDb`
 - **Port**: 5434 (host) → 5432 (container)
+
+## Storage
+
+- **Azurite (Local)**: Azure Storage Emulator
+  - Blob: http://localhost:10000
+  - Pre-configured in `.env.example`
+  - See `AZURITE_SETUP.md` for details
+
+## Network
+
 - **Network**: `aurora-network` (isolated)
 
 > **Note**: সম্পূর্ণ independent setup - কোনো external dependency নেই।

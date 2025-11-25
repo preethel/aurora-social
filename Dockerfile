@@ -57,6 +57,7 @@ COPY server/controllers ./controllers
 COPY server/middleware ./middleware
 COPY server/routes ./routes
 COPY server/scripts ./scripts
+COPY server/services ./services
 COPY server/server.ts ./server.ts
 COPY server/tsconfig.json ./tsconfig.json
 
@@ -73,5 +74,37 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1
 
+# Copy migration startup script
+COPY <<'EOF' /app/start.sh
+#!/bin/sh
+set -e
+
+echo "Running database migrations..."
+
+# Run migrations with retry logic
+MAX_RETRIES=5
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if npx prisma migrate deploy; then
+    echo "✅ Migrations applied successfully"
+    break
+  else
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+      echo "❌ Failed to apply migrations after $MAX_RETRIES attempts"
+      exit 1
+    fi
+    echo "⚠️  Migration attempt $RETRY_COUNT failed, retrying in 5 seconds..."
+    sleep 5
+  fi
+done
+
+echo "Starting application..."
+exec npm start
+EOF
+
+RUN chmod +x /app/start.sh
+
 # Run migrations and start server
-CMD npx prisma migrate deploy && npm start
+CMD ["/app/start.sh"]

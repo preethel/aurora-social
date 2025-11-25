@@ -1,17 +1,8 @@
-# Default Docker Compose Configuration (uses compose.local.yml)
-#
-# For LOCAL DEVELOPMENT (with Azurite):
-#   docker compose up -d
-#   OR
-#   docker compose -f compose.local.yml up -d
-#
-# For PRODUCTION (with Azure Storage):
-#   docker compose -f compose.prod.yml --env-file .env.production up -d
-#
-# See DEPLOYMENT.md for detailed instructions
+# Local Development Docker Compose Configuration
+# Usage: docker compose -f compose.local.yml up -d
 
 services:
-  # Azurite - Azure Storage Emulator for local development
+  # Azurite - Azure Storage Emulator (Local Development Only)
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
     container_name: aurora-azurite
@@ -54,18 +45,21 @@ services:
       dockerfile: Dockerfile
     container_name: aurora-app
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=3000
       - DATABASE_URL=postgresql://postgres:postgres@aurora-postgres:5432/AuroraSocialDb?schema=public
-      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - JWT_SECRET=local-dev-secret-key
       - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
-      - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
-      - AZURE_STORAGE_CONTAINER_NAME=${AZURE_STORAGE_CONTAINER_NAME:-screenshots}
+      # Local Azurite Connection String
+      - AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+      - AZURE_STORAGE_CONTAINER_NAME=screenshots
     ports:
       - "3000:3000"
     depends_on:
       aurora-postgres:
         condition: service_healthy
+      azurite:
+        condition: service_started
     restart: always
     networks:
       - aurora-network

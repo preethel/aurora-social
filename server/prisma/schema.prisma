@@ -34,6 +34,8 @@ model Post {
   redirectLink String?  @map("redirect_link")
   category     String?
   postType     String?  @map("post_type")
+  impressions  Int?
+  engagement   Int?
 
   @@map("posts")
 }

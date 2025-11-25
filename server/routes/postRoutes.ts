@@ -1,6 +1,12 @@
-import express from 'express';
-import { createPost, deletePost, getPosts, updatePost } from '../controllers/postController.js';
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import express from "express";
+import {
+  createPost,
+  deletePost,
+  getPosts,
+  updatePost,
+  updatePostInsights,
+} from "../controllers/postController.js";
+import { authenticateToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -38,7 +44,7 @@ const router = express.Router();
  *               items:
  *                 $ref: '#/components/schemas/Post'
  */
-router.get('/', authenticateToken, getPosts);
+router.get("/", authenticateToken, getPosts);
 
 /**
  * @swagger
@@ -58,7 +64,7 @@ router.get('/', authenticateToken, getPosts);
  *       201:
  *         description: Post created
  */
-router.post('/', authenticateToken, createPost);
+router.post("/", authenticateToken, createPost);
 
 /**
  * @swagger
@@ -84,7 +90,38 @@ router.post('/', authenticateToken, createPost);
  *       200:
  *         description: Post updated
  */
-router.put('/:id', authenticateToken, updatePost);
+router.put("/:id", authenticateToken, updatePost);
+
+/**
+ * @swagger
+ * /api/posts/{id}/insights:
+ *   put:
+ *     summary: Update post insights (impressions and engagement)
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               impressions:
+ *                 type: number
+ *               engagement:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Post insights updated
+ */
+router.put("/:id/insights", authenticateToken, updatePostInsights);
 
 /**
  * @swagger
@@ -104,6 +141,6 @@ router.put('/:id', authenticateToken, updatePost);
  *       204:
  *         description: Post deleted
  */
-router.delete('/:id', authenticateToken, deletePost);
+router.delete("/:id", authenticateToken, deletePost);
 
 export default router;
