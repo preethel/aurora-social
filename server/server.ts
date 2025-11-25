@@ -80,12 +80,12 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 // Trust proxy for proper protocol detection
-app.set('trust proxy', true);
+app.set("trust proxy", true);
 
 // Force HTTP for assets in production when behind proxy
 app.use((req, res, next) => {
   // Remove any upgrade-insecure-requests header
-  res.removeHeader('Upgrade-Insecure-Requests');
+  res.removeHeader("Upgrade-Insecure-Requests");
   next();
 });
 
