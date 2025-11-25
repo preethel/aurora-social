@@ -64,16 +64,30 @@ app.use(
         ],
         mediaSrc: ["'self'", "https:", "http:", "data:", "blob:"],
         fontSrc: ["'self'", "data:", "https:", "https://fonts.gstatic.com"],
+        // Don't upgrade HTTP to HTTPS
+        upgradeInsecureRequests: null,
       },
     },
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    // Disable these for HTTP compatibility
+    originAgentCluster: false,
   })
 );
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+
+// Trust proxy for proper protocol detection
+app.set('trust proxy', true);
+
+// Force HTTP for assets in production when behind proxy
+app.use((req, res, next) => {
+  // Remove any upgrade-insecure-requests header
+  res.removeHeader('Upgrade-Insecure-Requests');
+  next();
+});
 
 // Swagger Configuration
 const swaggerOptions = {
