@@ -86,7 +86,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "http://localhost:8080",
+        url: "http://localhost:3000",
       },
     ],
     components: {
@@ -237,7 +237,7 @@ app.get("*", (req: Request, res: Response) => {
   res.sendFile(path.join(clientDistPath, "index.html"));
 });
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
   console.log(`Swagger docs available at http://localhost:${port}/api-docs`);

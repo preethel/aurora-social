@@ -67,11 +67,11 @@ COPY --from=client-builder /app/client/dist ./client/dist
 RUN npm install -g tsx
 
 # Expose port
-EXPOSE 8080
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1
 
 # Run migrations and start server
 CMD npx prisma migrate deploy && npm start

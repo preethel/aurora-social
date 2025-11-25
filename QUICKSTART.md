@@ -22,8 +22,8 @@ docker exec -it aurora-app npm run create-admin
 
 ## Access
 
-- **Application**: http://localhost:8080
-- **API Docs**: http://localhost:8080/api-docs
+- **Application**: http://localhost:3000
+- **API Docs**: http://localhost:3000/api-docs
 
 ## Architecture
 

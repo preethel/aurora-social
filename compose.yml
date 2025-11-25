@@ -28,12 +28,12 @@ services:
     container_name: aurora-app
     environment:
       - NODE_ENV=production
-      - PORT=8080
+      - PORT=3000
       - DATABASE_URL=postgresql://postgres:postgres@aurora-postgres:5432/AuroraSocialDb?schema=public
       - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
       - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
     ports:
-      - "8080:8080"
+      - "3000:3000"
     depends_on:
       aurora-postgres:
         condition: service_healthy
@@ -48,7 +48,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://localhost:8080/api/auth/health",
+          "http://localhost:3000/api/auth/health",
         ]
       interval: 30s
       timeout: 10s

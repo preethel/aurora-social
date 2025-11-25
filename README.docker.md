@@ -40,8 +40,8 @@ docker exec -it aurora-app npm run create-admin
 
 ## Service URLs
 
-- **Application**: http://localhost:8080 (Client UI + API)
-- **API Docs**: http://localhost:8080/api-docs
+- **Application**: http://localhost:3000 (Client UI + API)
+- **API Docs**: http://localhost:3000/api-docs
 - **Postgres**: localhost:5434 (from host machine)
 
 ## Database Information
@@ -106,11 +106,11 @@ docker inspect --format='{{.State.Health.Status}}' aurora-app
 
 ### Port conflicts
 
-If port 8080 is already in use, modify the port mapping in `compose.yml`:
+If port 3000 is already in use, modify the port mapping in `compose.yml`:
 
 ```yaml
 ports:
-  - "8081:8080" # Change host port
+  - "3001:3000" # Change host port
 ```
 
 ### Build issues
