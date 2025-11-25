@@ -223,12 +223,12 @@ app.get("/api/youtube", (req: Request, res: Response) => {
 });
 
 // Serve static files from the client dist directory
-// In production (Docker): client/dist relative to server directory
+// In production (Docker): client/dist relative to /app directory
 // In development: ../client/dist relative to server directory
 const clientDistPath =
   process.env.NODE_ENV === "production"
-    ? path.join(__dirname, "..", "client", "dist")
-    : path.join(__dirname, "..", "..", "client", "dist");
+    ? path.join(__dirname, "client", "dist")
+    : path.join(__dirname, "..", "client", "dist");
 
 app.use(express.static(clientDistPath));
 
