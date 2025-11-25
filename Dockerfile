@@ -1,6 +1,4 @@
-# Multi-stage build for Aurora Social (TypeScript + Prisma)
-
-# Stage 1: Build client
+# Build stage for client
 FROM node:20-alpine AS client-builder
 
 WORKDIR /app/client
@@ -8,77 +6,72 @@ WORKDIR /app/client
 # Copy client package files
 COPY client/package*.json ./
 
-# Install dependencies with cache mount
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+# Install client dependencies
+RUN npm ci
 
-# Copy client source
+# Copy client source code
 COPY client/ ./
 
 # Build client
 RUN npm run build
 
-# Stage 2: Build server
+# Build stage for server
 FROM node:20-alpine AS server-builder
 
 WORKDIR /app/server
 
 # Copy server package files
 COPY server/package*.json ./
-COPY server/tsconfig.json ./
+COPY server/prisma ./prisma/
 
-# Install ALL dependencies (including dev for TypeScript compilation) with cache mount
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+# Install server dependencies
+RUN npm ci
 
-# Copy server source and Prisma schema
+# Copy server source code
 COPY server/ ./
 
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build TypeScript
-RUN npm run build
-
-# Stage 3: Production runtime
+# Production stage
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install wget for healthcheck
+RUN apk add --no-cache wget
 
 # Copy server package files
-COPY server/package*.json ./server/
-
-# Install production dependencies only with cache mount
-WORKDIR /app/server
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
-
-# Copy Prisma schema and migrations
+COPY server/package*.json ./
 COPY server/prisma ./prisma/
 
-# Generate Prisma Client in production
+# Install production dependencies only
+RUN npm ci --only=production
+
+# Generate Prisma Client
 RUN npx prisma generate
 
-# Copy built server from builder
-COPY --from=server-builder /app/server/dist ./dist
+# Copy server source files
+COPY server/config ./config
+COPY server/controllers ./controllers
+COPY server/middleware ./middleware
+COPY server/routes ./routes
+COPY server/scripts ./scripts
+COPY server/server.ts ./server.ts
+COPY server/tsconfig.json ./tsconfig.json
 
-# Copy built client from client-builder to the correct location
+# Copy built client files from client-builder
 COPY --from=client-builder /app/client/dist ./client/dist
 
-# Copy environment file template
-COPY .env.example ../.env.example
-
-WORKDIR /app/server
+# Install tsx for running TypeScript
+RUN npm install -g tsx
 
 # Expose port
 EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080 || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1
 
-# Start the application
-CMD ["node", "dist/server.js"]
+# Run migrations and start server
+CMD npx prisma migrate deploy && npm start

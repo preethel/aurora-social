@@ -1,0 +1,63 @@
+services:
+  # Aurora Postgres Database
+  aurora-postgres:
+    image: postgres:16
+    container_name: aurora-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=AuroraSocialDb
+    ports:
+      - "5434:5432"
+    volumes:
+      - aurora_postgres_data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - aurora-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aurora Social Application (Server + Client)
+  aurora-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aurora-app
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - DATABASE_URL=postgresql://postgres:postgres@aurora-postgres:5432/AuroraSocialDb?schema=public
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - IFRAMELY_API_KEY=${IFRAMELY_API_KEY}
+    ports:
+      - "8080:8080"
+    depends_on:
+      aurora-postgres:
+        condition: service_healthy
+    restart: always
+    networks:
+      - aurora-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/api/auth/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  aurora-network:
+    driver: bridge
+
+volumes:
+  aurora_postgres_data:
