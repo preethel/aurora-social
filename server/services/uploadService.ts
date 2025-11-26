@@ -1,8 +1,13 @@
-import { BlobServiceClient } from "@azure/storage-blob";
+import {
+  BlobSASPermissions,
+  BlobServiceClient,
+  generateBlobSASQueryParameters,
+  StorageSharedKeyCredential,
+} from "@azure/storage-blob";
 
 /**
  * Upload screenshot to Azure Blob Storage
- * Returns the URL where the screenshot is stored
+ * Returns the URL where the screenshot is stored (with SAS token for private containers)
  */
 export async function uploadScreenshot(
   base64Image: string,
@@ -32,8 +37,8 @@ export async function uploadScreenshot(
       BlobServiceClient.fromConnectionString(connectionString);
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
-    // Ensure container exists
-    await containerClient.createIfNotExists({ access: "blob" });
+    // Ensure container exists (without public access requirement)
+    await containerClient.createIfNotExists();
 
     const blobName = `${postId}_${Date.now()}.${imageType}`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -44,11 +49,59 @@ export async function uploadScreenshot(
       },
     });
 
-    return blockBlobClient.url;
+    // Generate SAS URL for private access (valid for 10 years)
+    const sasUrl = await generateBlobSASUrl(
+      connectionString,
+      containerName,
+      blobName
+    );
+
+    return sasUrl;
   } catch (error) {
     console.error("Error uploading screenshot to Azure:", error);
     throw new Error("Failed to upload screenshot");
   }
+}
+
+/**
+ * Generate SAS URL for blob with read permissions
+ */
+async function generateBlobSASUrl(
+  connectionString: string,
+  containerName: string,
+  blobName: string
+): Promise<string> {
+  // Parse connection string to get account name and key
+  const accountNameMatch = connectionString.match(/AccountName=([^;]+)/);
+  const accountKeyMatch = connectionString.match(/AccountKey=([^;]+)/);
+
+  if (!accountNameMatch || !accountKeyMatch) {
+    throw new Error("Invalid connection string format");
+  }
+
+  const accountName = accountNameMatch[1];
+  const accountKey = accountKeyMatch[1];
+
+  const sharedKeyCredential = new StorageSharedKeyCredential(
+    accountName,
+    accountKey
+  );
+
+  // SAS token valid for 10 years
+  const expiresOn = new Date();
+  expiresOn.setFullYear(expiresOn.getFullYear() + 10);
+
+  const sasToken = generateBlobSASQueryParameters(
+    {
+      containerName,
+      blobName,
+      permissions: BlobSASPermissions.parse("r"), // Read only
+      expiresOn,
+    },
+    sharedKeyCredential
+  ).toString();
+
+  return `https://${accountName}.blob.core.windows.net/${containerName}/${blobName}?${sasToken}`;
 }
 
 /**
