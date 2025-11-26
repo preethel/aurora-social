@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "impressions" INTEGER;
+ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "engagement" INTEGER;
